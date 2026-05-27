@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-ui: 'Inter', 'Segoe UI', sans-serif;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.16);
+    --shadow-hard: 0 14px 40px rgba(15, 23, 42, 0.28);
+  }
+
+  [data-theme='dark'] {
+    --bg: #0b1020;
+    --bg-muted: #121a30;
+    --surface: #182239;
+    --surface-hover: #202b44;
+    --border: #2a3550;
+    --text: #e8edf7;
+    --text-muted: #9ca7bf;
+    --primary: #7c8fff;
+    --success: #2ccfa7;
+    --warning: #ffcc66;
+    --danger: #ff7f87;
+  }
+
+  [data-theme='light'] {
+    --bg: #f4f7fb;
+    --bg-muted: #edf1f8;
+    --surface: #ffffff;
+    --surface-hover: #f4f7fb;
+    --border: #d9e1ef;
+    --text: #14213d;
+    --text-muted: #5f6c86;
+    --primary: #4f5dff;
+    --success: #08b48f;
+    --warning: #cc8e00;
+    --danger: #dc4a58;
+  }
+
+  html,
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text);
+    @apply antialiased;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+}
+
+@layer components {
+  .ui-surface {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .ui-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+  }
+
+  .ui-input {
+    background: var(--bg-muted);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.85rem;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+
+  .ui-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+
+  .ui-button {
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.9rem;
+    font-weight: 600;
+    transition: transform 120ms ease, opacity 120ms ease, background-color 120ms ease;
+  }
+
+  .ui-button:active {
+    transform: translateY(1px);
+  }
+
+  .ui-button-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .ui-button-ghost {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .ui-button-danger {
+    background: var(--danger);
+    color: white;
+  }
+}

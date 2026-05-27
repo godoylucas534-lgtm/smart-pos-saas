@@ -1,0 +1,24 @@
+﻿{
+  "name": "pos-system",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker-compose up --build",
+    "dev:backend": "cd apps/backend && npm run start:dev",
+    "dev:frontend": "cd apps/frontend && npm run dev",
+    "install:all": "npm install && cd apps/backend && npm install && cd ../frontend && npm install",
+    "db:migrate": "cd apps/backend && npm run migration:run",
+    "db:seed": "cd apps/backend && npm run seed",
+    "db:reset": "cd apps/backend && npm run schema:drop && npm run migration:run && npm run seed",
+    "test": "cd apps/backend && npm run test",
+    "test:e2e": "cd apps/backend && npm run test:e2e",
+    "lint": "cd apps/backend && npm run lint && cd ../frontend && npm run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
