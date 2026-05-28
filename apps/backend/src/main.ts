@@ -7,11 +7,11 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const isProd = process.env.NODE_ENV === 'production';
-  const frontendUrls = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
+  const frontendUrls = (process.env.CORS_ORIGIN || process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
     .split(',')
     .map((url) => url.trim())
     .filter(Boolean);
-  const defaultDevOrigin = 'http://localhost:5173';
+  const localhostDevRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 
   app.use(helmet());
 
@@ -31,8 +31,8 @@ async function bootstrap() {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
 
-      const allowlist = frontendUrls.length > 0 ? frontendUrls : !isProd ? [defaultDevOrigin] : [];
-      if (allowlist.includes(origin)) return callback(null, true);
+      if (frontendUrls.includes(origin)) return callback(null, true);
+      if (!isProd && localhostDevRegex.test(origin)) return callback(null, true);
 
       return callback(new Error('CORS origin not allowed'));
     },
