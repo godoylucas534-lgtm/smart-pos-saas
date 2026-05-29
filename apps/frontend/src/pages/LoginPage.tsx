@@ -6,8 +6,8 @@ import { APP_NAME } from '../config/env';
 import { useLoginMutation } from '@/features/auth/hooks/useLoginMutation';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@empresa.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
