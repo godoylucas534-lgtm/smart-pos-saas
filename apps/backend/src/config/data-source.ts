@@ -28,7 +28,7 @@ export const AppDataSource = new DataSource({
         database: process.env.DB_DATABASE || process.env.POSTGRES_DB || 'sistema_local',
       }),
   entities: [Store, User, Category, Product, Customer, StoreSubscription],
-  migrations: [path.join(__dirname, '../migrations/*.ts')],
+  migrations: [path.join(__dirname, '../migrations/*.{ts,js}')],
   migrationsTableName: 'typeorm_migrations',
   synchronize: false,
   logging: process.env.DB_LOGGING === 'true',
