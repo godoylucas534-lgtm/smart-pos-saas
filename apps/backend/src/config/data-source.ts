@@ -3,13 +3,19 @@ import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Entidades
 import { Store } from '../modules/stores/entities/store.entity';
 import { User } from '../modules/users/user.entity';
 import { Category } from '../modules/products/entities/category.entity';
 import { Product } from '../modules/products/entities/product.entity';
 import { Customer } from '../modules/customers/entities/customer.entity';
+import { Sale, SaleItem } from '../modules/sales/entities/sale.entity';
+import { CashRegister } from '../modules/cash-register/entities/cash-register.entity';
+import { Expense } from '../modules/expenses/entities/expense.entity';
+import { CreditAccount } from '../modules/credit-accounts/entities/credit-account.entity';
+import { StockMovement } from '../modules/stock-movements/entities/stock-movement.entity';
+import { AuditLog } from '../modules/audit-logs/entities/audit-log.entity';
 import { StoreSubscription } from '../modules/saas/entities/store-subscription.entity';
+import { StoreCounter } from '../modules/sales/entities/store-counter.entity';
 
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
 
@@ -27,7 +33,22 @@ export const AppDataSource = new DataSource({
         password: process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'pos_pass_dev',
         database: process.env.DB_DATABASE || process.env.POSTGRES_DB || 'sistema_local',
       }),
-  entities: [Store, User, Category, Product, Customer, StoreSubscription],
+  entities: [
+    Store,
+    User,
+    Category,
+    Product,
+    Customer,
+    Sale,
+    SaleItem,
+    CashRegister,
+    Expense,
+    CreditAccount,
+    StockMovement,
+    AuditLog,
+    StoreSubscription,
+    StoreCounter,
+  ],
   migrations: [path.join(__dirname, '../migrations/*.{ts,js}')],
   migrationsTableName: 'typeorm_migrations',
   synchronize: false,

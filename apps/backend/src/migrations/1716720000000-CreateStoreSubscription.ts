@@ -4,6 +4,10 @@ export class CreateStoreSubscription1716720000000 implements MigrationInterface 
   name = 'CreateStoreSubscription1716720000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const subscriptionTableExists = await queryRunner.hasTable('store_subscription');
+    if (subscriptionTableExists) {
+      return;
+    }
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.query(
       `CREATE TYPE "public"."store_subscription_plan_enum" AS ENUM('basic', 'pro', 'enterprise')`,
