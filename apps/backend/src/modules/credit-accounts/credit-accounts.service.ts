@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DataSource } from 'typeorm';
+import { Repository, DataSource, In, MoreThan } from 'typeorm';
 import { CreditAccount } from './entities/credit-account.entity';
 import { Customer } from '../customers/entities/customer.entity';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -65,39 +65,30 @@ export class CreditAccountsService {
   }
 
   async listPending(storeId: string) {
-    try {
-      const accounts = await this.repo.find({
-        where: { storeId },
-        order: { balance: 'DESC' },
-      });
+    const pending = await this.repo.find({
+      where: { storeId, balance: MoreThan(0) },
+      order: { balance: 'DESC' },
+    });
+    if (pending.length === 0) return [];
 
-      const pending = accounts.filter((a) => Number(a.balance) > 0);
-      if (pending.length === 0) {
-        return [];
-      }
+    const customerIds = pending.map((a) => a.customerId);
+    const customers = await this.customerRepo.find({
+      where: { storeId, id: In(customerIds) },
+    });
+    const customerMap = new Map(customers.map((c) => [c.id, c]));
 
-      const customerIds = pending.map((a) => a.customerId);
-      const customers = await this.customerRepo.find({
-        where: { storeId, id: In(customerIds) },
-      });
-
-      const customerMap = new Map(customers.map((c) => [c.id, c]));
-
-      return pending.map((a) => {
-        const c = customerMap.get(a.customerId);
-        return {
-          id: a.id,
-          customerId: a.customerId,
-          balance: Number(a.balance),
-          lastPaymentAt: a.lastPaymentAt,
-          firstName: c?.firstName || '',
-          lastName: c?.lastName || '',
-          phone: c?.phone || '',
-          document: c?.document || '',
-        };
-      });
-    } catch {
-      return [];
-    }
+    return pending.map((a) => {
+      const c = customerMap.get(a.customerId);
+      return {
+        id: a.id,
+        customerId: a.customerId,
+        balance: Number(a.balance),
+        lastPaymentAt: a.lastPaymentAt,
+        firstName: c?.firstName || '',
+        lastName: c?.lastName || '',
+        phone: c?.phone || '',
+        document: c?.document || '',
+      };
+    });
   }
 }

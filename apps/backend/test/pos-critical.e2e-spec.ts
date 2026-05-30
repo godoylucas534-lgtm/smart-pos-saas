@@ -361,6 +361,8 @@ describe('POS Critical E2E', () => {
       const accountBefore = (pendingBefore.body || []).find((a: any) => a.customerId === customerId);
       expect(accountBefore).toBeTruthy();
       expect(Number(accountBefore.balance)).toBeGreaterThan(0);
+      expect(accountBefore.firstName).toBe('Credito');
+      expect(accountBefore.lastName).toContain('E2E');
 
       const partialAmount = Math.floor(Number(accountBefore.balance) / 2);
       expect(partialAmount).toBeGreaterThan(0);
