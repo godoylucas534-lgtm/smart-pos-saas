@@ -1,4 +1,4 @@
-import {
+﻿import {
   IsString,
   IsEmail,
   MinLength,
@@ -7,6 +7,7 @@ import {
   IsEnum,
   Matches,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RegisterStoreDto {
   @IsString({ message: 'El nombre debe ser un texto' })
@@ -19,6 +20,7 @@ export class RegisterStoreDto {
   @MaxLength(100)
   lastName!: string;
 
+  @Transform(({ value }) => String(value || '').trim().toLowerCase())
   @IsEmail({}, { message: 'Email no válido' })
   email!: string;
 

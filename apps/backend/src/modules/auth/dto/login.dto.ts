@@ -1,12 +1,14 @@
+ï»¿import { Transform } from 'class-transformer';
 import { IsEmail, IsString, MinLength, MaxLength, IsOptional, IsIn, Matches } from 'class-validator';
 
 export class LoginDto {
-  @IsEmail({}, { message: 'Email inválido' })
+  @Transform(({ value }) => String(value || '').trim().toLowerCase())
+  @IsEmail({}, { message: 'Email invÃ¡lido' })
   email!: string;
 
   @IsString()
-  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
-  @Matches(/\d/, { message: 'La contraseña debe contener al menos 1 número' })
+  @MinLength(8, { message: 'La contraseÃ±a debe tener al menos 8 caracteres' })
+  @Matches(/\d/, { message: 'La contraseÃ±a debe contener al menos 1 nÃºmero' })
   password!: string;
 }
 
@@ -21,12 +23,13 @@ export class RegisterStoreDto {
   @MaxLength(100)
   lastName!: string;
 
-  @IsEmail({}, { message: 'Email inválido' })
+  @Transform(({ value }) => String(value || '').trim().toLowerCase())
+  @IsEmail({}, { message: 'Email invÃ¡lido' })
   email!: string;
 
   @IsString()
-  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
-  @Matches(/\d/, { message: 'La contraseña debe contener al menos 1 número' })
+  @MinLength(8, { message: 'La contraseÃ±a debe tener al menos 8 caracteres' })
+  @Matches(/\d/, { message: 'La contraseÃ±a debe contener al menos 1 nÃºmero' })
   password!: string;
 
   @IsString()

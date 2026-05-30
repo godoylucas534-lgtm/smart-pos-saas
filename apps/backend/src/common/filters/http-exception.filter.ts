@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
@@ -41,6 +41,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message = 'Duplicate value violates a unique constraint.';
     } else if (isQueryError) {
       message = 'Invalid database operation.';
+    }
+
+    if (status === HttpStatus.TOO_MANY_REQUESTS) {
+      console.warn(`[throttle] 429 path=${request.url} ip=${request.ip}`);
+      message = 'Demasiados intentos. Espera unos segundos e intenta nuevamente.';
+    }
+
+    if (
+      status === HttpStatus.UNAUTHORIZED
+      && (!message || message === 'Unauthorized' || message === 'Internal server error')
+    ) {
+      message = 'Credenciales inválidas o sesión expirada.';
     }
 
     const safeDetails = isProd ? undefined : details;
