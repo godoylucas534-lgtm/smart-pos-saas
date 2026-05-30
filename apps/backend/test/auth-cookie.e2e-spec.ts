@@ -186,4 +186,20 @@ describe('Auth Email Normalization E2E', () => {
     expect(me.status).toBe(200);
     expect(me.body?.user?.email).toBe('admin.a@e2e.local');
   });
+
+  it('login incluye header set-cookie para pos_at', async () => {
+    const login = await request(app.getHttpServer()).post('/api/v1/auth/login').send({
+      email: 'admin.a@e2e.local',
+      password: 'Admin1234',
+    });
+
+    expect(login.status).toBe(200);
+    const setCookie = login.headers['set-cookie'] as string[] | undefined;
+    expect(setCookie).toBeDefined();
+    expect(Array.isArray(setCookie)).toBe(true);
+    expect(setCookie?.some((cookie) => cookie.includes('pos_at='))).toBe(true);
+    expect(setCookie?.some((cookie) => cookie.includes('HttpOnly'))).toBe(true);
+    expect(setCookie?.some((cookie) => cookie.includes('Secure'))).toBe(true);
+    expect(setCookie?.some((cookie) => cookie.includes('SameSite=None'))).toBe(true);
+  });
 });

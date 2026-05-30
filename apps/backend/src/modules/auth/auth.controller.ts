@@ -19,7 +19,6 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 @Controller('auth')
 export class AuthController {
   private readonly authCookieName = process.env.AUTH_COOKIE_NAME || 'pos_at';
-  private readonly isProd = process.env.NODE_ENV === 'production';
 
   constructor(
     private authService: AuthService,
@@ -30,8 +29,15 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
-  async login(@Request() req: any) {
+  async login(@Request() req: any, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(req.user);
+    res.cookie(this.authCookieName, result.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: 8 * 60 * 60 * 1000,
+    });
 
     try {
       await this.auditLogsService.recordAudit(
@@ -63,18 +69,13 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(@Request() req: any, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(req.user);
-
-    const cookieHeader = String(req.headers?.cookie || '');
-    const hasAuthCookie = cookieHeader.includes(`${this.authCookieName}=`);
-    if (hasAuthCookie) {
-      res.cookie(this.authCookieName, result.accessToken, {
-        httpOnly: true,
-        secure: this.isProd,
-        sameSite: 'none',
-        path: '/',
-        maxAge: 8 * 60 * 60 * 1000,
-      });
-    }
+    res.cookie(this.authCookieName, result.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: 8 * 60 * 60 * 1000,
+    });
 
     return result;
   }
