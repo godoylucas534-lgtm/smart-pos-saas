@@ -388,6 +388,41 @@ describe('POS Critical E2E', () => {
     });
   });
 
+  describe('Productos', () => {
+    it('actualizar solo stock y stockMin permite opcionales vacios del formulario', async () => {
+      const res = await req(`/api/v1/products/${seed.productA.id}`, {
+        method: 'PUT',
+        token: adminToken,
+        body: { stock: 15, stockMin: 4, categoryId: '' },
+      });
+      expect(res.status).toBe(200);
+      expect(Number(res.body.stock)).toBe(15);
+      expect(Number(res.body.stockMin)).toBe(4);
+    });
+
+    it('actualizar precio y stock devuelve 200', async () => {
+      const res = await req(`/api/v1/products/${seed.productA.id}`, {
+        method: 'PUT',
+        token: adminToken,
+        body: { costPrice: 7000, salePrice: 15000, stock: 18 },
+      });
+      expect(res.status).toBe(200);
+      expect(Number(res.body.costPrice)).toBe(7000);
+      expect(Number(res.body.salePrice)).toBe(15000);
+      expect(Number(res.body.stock)).toBe(18);
+    });
+
+    it('payload invalido devuelve 400 con mensaje especifico', async () => {
+      const res = await req(`/api/v1/products/${seed.productA.id}`, {
+        method: 'PUT',
+        token: adminToken,
+        body: { salePrice: 0 },
+      });
+      expect(res.status).toBe(400);
+      expect(String(res.body?.message || '')).toContain('salePrice debe ser mayor a 0');
+    });
+  });
+
   describe('Multi-tenant', () => {
     it('tienda A no accede tienda B', async () => {
       const res = await req(`/api/v1/stores/${seed.storeB.id}`, { token: adminToken });

@@ -123,14 +123,26 @@ export default function ProductsPage() {
     if (Number(form.stock || 0) < 0) return toast.error('Stock no puede ser negativo');
 
     try {
+      const optionalText = (value?: string) => {
+        const trimmed = value?.trim();
+        return trimmed ? trimmed : undefined;
+      };
       const payload = {
         ...form,
+        name: form.name.trim(),
+        description: optionalText(form.description),
+        categoryId: optionalText(form.categoryId),
+        brand: optionalText(form.brand),
+        supplier: optionalText(form.supplier),
+        sku: optionalText(form.sku),
+        barcode: optionalText(form.barcode),
+        unit: form.unit || 'unidad',
         costPrice: Number(form.costPrice || 0),
         salePrice: Number(form.salePrice || 0),
         stock: Number(form.stock || 0),
         stockMin: Number(form.stockMin || 0),
         taxRate: Number(form.taxRate || 0),
-        imageUrl: form.imageUrl?.trim() ? form.imageUrl.trim() : undefined,
+        imageUrl: optionalText(form.imageUrl),
         metadata: (form as any).notes?.trim() ? { notes: (form as any).notes.trim() } : undefined,
       };
       delete (payload as any).notes;
