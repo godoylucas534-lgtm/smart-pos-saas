@@ -28,6 +28,15 @@ describe('SaaS Subscription E2E', () => {
     return { status: res.status, body };
   };
 
+  const openCashRegister = async (token: string, openingAmount = 100000) => {
+    const open = await req('/api/v1/cash-register/open', {
+      method: 'POST',
+      token,
+      body: { openingAmount, notes: 'e2e-open' },
+    });
+    expect(open.status).toBe(201);
+  };
+
   const login = async (email: string, password: string) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -75,6 +84,7 @@ describe('SaaS Subscription E2E', () => {
   });
 
   it('active store can create sale', async () => {
+    await openCashRegister(adminToken);
     const sale = await req('/api/v1/sales', {
       method: 'POST',
       token: adminToken,
@@ -88,6 +98,7 @@ describe('SaaS Subscription E2E', () => {
   });
 
   it('suspended store cannot create sale', async () => {
+    await openCashRegister(adminToken);
     await req(`/api/v1/saas/admin/tenants/${seed.storeA.id}/suspend`, {
       method: 'PATCH',
       token: superAdminToken,
@@ -148,8 +159,10 @@ describe('SaaS Subscription E2E', () => {
   it('basic plan cannot use credits, pro plan can', async () => {
     const basicPending = await req('/api/v1/credit-accounts/pending', { token: adminBToken });
     expect(basicPending.status).toBe(403);
+    expect(basicPending.body?.code).toBe('SAAS_FEATURE_NOT_AVAILABLE');
     expect(String(basicPending.body.message)).toContain('credits');
 
+    await openCashRegister(adminToken);
     const proSale = await req('/api/v1/sales', {
       method: 'POST',
       token: adminToken,
@@ -168,5 +181,22 @@ describe('SaaS Subscription E2E', () => {
       storeId: seed.storeA.id,
     });
     expect(subscription.plan).toBe(SubscriptionPlan.PRO);
+  });
+
+  it('tenant basic activo puede ver dashboard base', async () => {
+    const daily = await req('/api/v1/sales/summary/daily', { token: adminBToken });
+    expect(daily.status).toBe(200);
+    expect(daily.body?.totalSales).toBeDefined();
+
+    const topProducts = await req('/api/v1/sales/stats/top-products', { token: adminBToken });
+    expect(topProducts.status).toBe(200);
+    expect(Array.isArray(topProducts.body)).toBe(true);
+  });
+
+  it('rutas premium siguen bloqueadas con codigo consistente', async () => {
+    const pending = await req('/api/v1/credit-accounts/pending', { token: adminBToken });
+    expect(pending.status).toBe(403);
+    expect(pending.body?.code).toBe('SAAS_FEATURE_NOT_AVAILABLE');
+    expect(String(pending.body?.message || '')).toContain('credits');
   });
 });

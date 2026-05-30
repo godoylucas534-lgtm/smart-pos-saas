@@ -26,6 +26,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const payload = isHttp ? exception.getResponse() : null;
     let message: string | string[] = 'Internal server error';
     let details: any = undefined;
+    let customCode: string | undefined;
 
     if (typeof payload === 'string') {
       message = payload;
@@ -33,6 +34,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const p = payload as Record<string, any>;
       message = p.message || message;
       details = p.error || p.details;
+      customCode = typeof p.code === 'string' ? p.code : undefined;
     }
 
     const isProd = process.env.NODE_ENV === 'production';
@@ -60,7 +62,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     response.status(status).json({
       statusCode: status,
-      code: isHttp ? 'HTTP_ERROR' : 'UNHANDLED_ERROR',
+      code: customCode || (isHttp ? 'HTTP_ERROR' : 'UNHANDLED_ERROR'),
       message: safeMessage,
       details: safeDetails,
       path: request.url,

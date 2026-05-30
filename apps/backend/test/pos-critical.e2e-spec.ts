@@ -31,6 +31,15 @@ describe('POS Critical E2E', () => {
     return { status: res.status, body };
   };
 
+  const openCashRegister = async (token: string, openingAmount = 100000) => {
+    const open = await req('/api/v1/cash-register/open', {
+      method: 'POST',
+      token,
+      body: { openingAmount, notes: 'e2e-open' },
+    });
+    expect(open.status).toBe(201);
+  };
+
   async function ensureTestDatabase() {
     const { Client } = require('pg');
     const host = process.env.POSTGRES_HOST || 'localhost';
@@ -126,6 +135,7 @@ describe('POS Critical E2E', () => {
 
   describe('Roles', () => {
     it('cashier no puede anular venta (403), admin sí', async () => {
+      await openCashRegister(adminToken);
       const sale = await req('/api/v1/sales', {
         method: 'POST',
         token: adminToken,
@@ -151,6 +161,7 @@ describe('POS Critical E2E', () => {
     });
 
     it('cashier no puede pagar crédito (403), admin sí', async () => {
+      await openCashRegister(adminToken);
       const sale = await req('/api/v1/sales', {
         method: 'POST',
         token: adminToken,
@@ -203,7 +214,34 @@ describe('POS Critical E2E', () => {
   });
 
   describe('Venta', () => {
+    it('venta con caja cerrada falla; abrir caja y vender pasa', async () => {
+      const blocked = await req('/api/v1/sales', {
+        method: 'POST',
+        token: adminToken,
+        body: {
+          paymentMethod: 'cash',
+          amountPaid: 12000,
+          items: [{ productId: seed.productA.id, quantity: 1, unitPrice: 10000 }],
+        },
+      });
+      expect(blocked.status).toBe(400);
+      expect(String(blocked.body?.message || '')).toContain('Debe abrir caja antes de cobrar');
+
+      await openCashRegister(adminToken);
+      const allowed = await req('/api/v1/sales', {
+        method: 'POST',
+        token: adminToken,
+        body: {
+          paymentMethod: 'cash',
+          amountPaid: 12000,
+          items: [{ productId: seed.productA.id, quantity: 1, unitPrice: 10000 }],
+        },
+      });
+      expect(allowed.status).toBe(201);
+    });
+
     it('venta normal + decremento stock + kardex', async () => {
+      await openCashRegister(adminToken);
       const sale = await req('/api/v1/sales', {
         method: 'POST',
         token: adminToken,
@@ -235,6 +273,7 @@ describe('POS Critical E2E', () => {
 
   describe('Crédito', () => {
     it('venta crédito + pago parcial + saldo actualizado', async () => {
+      await openCashRegister(adminToken);
       const sale = await req('/api/v1/sales', {
         method: 'POST',
         token: adminToken,

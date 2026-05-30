@@ -16,8 +16,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { SalesService } from './sales.service';
 import { RolesGuard, Roles, UserRole } from '../../core/guards/roles.guard';
 import { CreateSaleDto } from './dto/create-sale.dto';
-import { RequireSaasFeature, SaasWriteOperation } from '../saas/saas.decorators';
-import { SaasFeature } from '../saas/saas.constants';
+import { SaasWriteOperation } from '../saas/saas.decorators';
 
 @Controller('sales')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -42,7 +41,6 @@ export class SalesController {
   }
 
   @Roles(UserRole.STORE_ADMIN)
-  @RequireSaasFeature(SaasFeature.REPORTS)
   @Get('summary/daily')
   getDailySummary(@Request() req: any, @Query('date') date?: string) {
     const storeId = req.user?.storeId ?? req.storeId;
@@ -50,7 +48,6 @@ export class SalesController {
   }
 
   @Roles(UserRole.STORE_ADMIN)
-  @RequireSaasFeature(SaasFeature.REPORTS)
   @Get('stats/hourly')
   getHourly(@Request() req: any, @Query('date') date?: string) {
     const storeId = req.user?.storeId ?? req.storeId;
@@ -58,7 +55,6 @@ export class SalesController {
   }
 
   @Roles(UserRole.STORE_ADMIN)
-  @RequireSaasFeature(SaasFeature.REPORTS)
   @Get('stats/top-products')
   getTopProducts(@Request() req: any, @Query('date') date?: string) {
     const storeId = req.user?.storeId ?? req.storeId;

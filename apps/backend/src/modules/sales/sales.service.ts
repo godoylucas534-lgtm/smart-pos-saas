@@ -3,6 +3,7 @@ import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Sale, SaleItem, SaleStatus, PaymentMethod } from './entities/sale.entity';
 import { Product } from '../products/entities/product.entity';
+import { CashRegister, CashRegisterStatus } from '../cash-register/entities/cash-register.entity';
 import { CreditAccountsService } from '../credit-accounts/credit-accounts.service';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { StockMovementType } from '../stock-movements/entities/stock-movement.entity';
@@ -25,6 +26,17 @@ export class SalesService {
   async create(storeId: string, cashierId: string, dto: CreateSaleDto): Promise<Sale> {
     return this.dataSource.transaction(async (manager) => {
       await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [storeId]);
+      const activeCashRegister = await manager
+        .getRepository(CashRegister)
+        .createQueryBuilder('cr')
+        .setLock('pessimistic_read')
+        .where('cr.storeId = :storeId', { storeId })
+        .andWhere('cr.cashierId = :cashierId', { cashierId })
+        .andWhere('cr.status = :status', { status: CashRegisterStatus.OPEN })
+        .getOne();
+      if (!activeCashRegister) {
+        throw new BadRequestException('Debe abrir caja antes de cobrar.');
+      }
 
       let subtotal = 0;
       let taxAmount = 0;
