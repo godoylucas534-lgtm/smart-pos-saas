@@ -32,7 +32,7 @@ import { SaasSubscriptionGuard } from './modules/saas/guards/saas-subscription.g
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 100,
+        limit: process.env.NODE_ENV === 'test' ? 10000 : 100,
       },
     ]),
     TypeOrmModule.forRootAsync({

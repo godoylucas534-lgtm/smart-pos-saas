@@ -1,7 +1,7 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": "..",
-  "testRegex": "test/(pos-critical|saas-subscription)\\.e2e-spec\\.ts$",
+  "testRegex": "test/(pos-critical|saas-subscription|auth-cookie|auth-refresh-v2|cors-config)\\.e2e-spec\\.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },

@@ -16,12 +16,27 @@ declare global {
 export class TenantMiddleware implements NestMiddleware {
   constructor(private jwtService: JwtService) {}
 
+  private readCookieFromHeader(cookieHeader: string | undefined, key: string): string | null {
+    if (!cookieHeader) return null;
+    const parts = cookieHeader.split(';');
+    for (const part of parts) {
+      const [rawName, ...rest] = part.trim().split('=');
+      if (rawName === key) {
+        return decodeURIComponent(rest.join('='));
+      }
+    }
+    return null;
+  }
+
   use(req: Request, _res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
     const jwtSecret = process.env.JWT_SECRET;
+    const cookieName = process.env.AUTH_COOKIE_NAME || 'pos_at';
+    const cookieToken = this.readCookieFromHeader(req.headers.cookie, cookieName);
+    const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const token = cookieToken || bearerToken;
 
-    if (authHeader && authHeader.startsWith('Bearer ') && jwtSecret) {
-      const token = authHeader.slice(7);
+    if (token && jwtSecret) {
       try {
         const payload = this.jwtService.verify(token, {
           secret: jwtSecret,

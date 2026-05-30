@@ -3,15 +3,15 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { isAllowedCorsOrigin, parseCorsOrigins } from './config/cors.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const isProd = process.env.NODE_ENV === 'production';
-  const frontendUrls = (process.env.CORS_ORIGIN || process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
-    .split(',')
-    .map((url) => url.trim())
-    .filter(Boolean);
-  const localhostDevRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+  const frontendUrls = parseCorsOrigins(
+    process.env.CORS_ORIGIN || process.env.FRONTEND_URLS || process.env.FRONTEND_URL,
+  );
+  const enableVercelPreviewCors = process.env.ENABLE_VERCEL_PREVIEW_CORS === 'true';
 
   app.use(helmet());
 
@@ -31,14 +31,17 @@ async function bootstrap() {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
 
-      if (frontendUrls.includes(origin)) return callback(null, true);
-      if (!isProd && localhostDevRegex.test(origin)) return callback(null, true);
+      const allowed = isAllowedCorsOrigin(origin, frontendUrls, {
+        isProd,
+        enableVercelPreviewCors,
+      });
+      if (allowed) return callback(null, true);
 
       return callback(new Error('CORS origin not allowed'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Transport', 'X-CSRF-Token'],
   });
 
   app.setGlobalPrefix('api/v1');

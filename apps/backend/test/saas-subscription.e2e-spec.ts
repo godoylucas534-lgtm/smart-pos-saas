@@ -29,7 +29,17 @@ describe('SaaS Subscription E2E', () => {
   };
 
   const login = async (email: string, password: string) => {
-    const res = await req('/api/v1/auth/login', { method: 'POST', body: { email, password } });
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-auth-transport': 'bearer',
+    };
+    const resRaw = await fetchAny(`${baseUrl}/api/v1/auth/login`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ email, password }),
+    });
+    const text = await resRaw.text();
+    const res = { status: resRaw.status, body: text ? JSON.parse(text) : null };
     expect(res.status).toBe(200);
     expect(res.body.accessToken).toBeTruthy();
     return res.body.accessToken as string;
@@ -106,7 +116,7 @@ describe('SaaS Subscription E2E', () => {
       body: { email: 'admin.a@e2e.local', password: 'Admin1234' },
     });
     expect(relogin.status).toBe(200);
-    expect(relogin.body.accessToken).toBeTruthy();
+    expect(relogin.body.user).toBeTruthy();
   });
 
   it('suspended store can query /saas/subscription/mine', async () => {

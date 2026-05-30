@@ -56,6 +56,7 @@ export default function RegisterPage() {
     try {
       const res = await fetch(apiUrl('/auth/register'), {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           firstName: form.firstName,
@@ -73,13 +74,13 @@ export default function RegisterPage() {
         Array.isArray(data.message) ? data.message[0] : data.message
       );
 
-      setAuth(data.user, data.accessToken);
+      setAuth(data.user);
 
       // Guardar datos de la tienda
       const storeId = data.user.storeId;
       if (storeId) {
         fetch(apiUrl(`/stores/${storeId}`), {
-          headers: { Authorization: `Bearer ${data.accessToken}` }
+          credentials: 'include',
         })
         .then(r => r.json())
         .then(store => localStorage.setItem('pos-store', JSON.stringify(store)))

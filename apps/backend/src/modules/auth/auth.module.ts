@@ -10,10 +10,11 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { User } from '@modules/users/user.entity';
 import { Store } from '@modules/stores/entities/store.entity';
 import { SaasModule } from '@modules/saas/saas.module';
+import { AuthSession } from './entities/auth-session.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Store]),
+    TypeOrmModule.forFeature([User, Store, AuthSession]),
     SaasModule,
     PassportModule,
     JwtModule.registerAsync({

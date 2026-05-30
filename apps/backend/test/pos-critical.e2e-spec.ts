@@ -52,7 +52,17 @@ describe('POS Critical E2E', () => {
   }
 
   const login = async (email: string, password: string) => {
-    const res = await req('/api/v1/auth/login', { method: 'POST', body: { email, password } });
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-auth-transport': 'bearer',
+    };
+    const resRaw = await fetchAny(`${baseUrl}/api/v1/auth/login`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ email, password }),
+    });
+    const text = await resRaw.text();
+    const res = { status: resRaw.status, body: text ? JSON.parse(text) : null };
     expect(res.status).toBe(200);
     return res.body.accessToken as string;
   };

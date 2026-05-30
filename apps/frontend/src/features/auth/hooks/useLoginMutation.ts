@@ -5,8 +5,14 @@ export const useLoginMutation = () =>
   useMutation({
     mutationFn: async (payload: LoginPayload) => {
       const auth = await loginRequest(payload);
-      const store = auth.user.storeId ? await fetchStoreById(auth.user.storeId) : null;
+      let store = null;
+      if (auth.user.storeId) {
+        try {
+          store = await fetchStoreById(auth.user.storeId);
+        } catch {
+          store = null;
+        }
+      }
       return { auth, store };
     },
   });
-

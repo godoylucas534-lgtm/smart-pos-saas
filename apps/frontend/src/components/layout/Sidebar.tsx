@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/auth.store';
+import { logoutRequest } from '@/features/auth/api/auth.api';
 
 type MenuItem = {
   to: string;
@@ -25,7 +26,7 @@ const menu: MenuItem[] = [
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout } = useAuthStore();
+  const { user, clearAuth } = useAuthStore();
   const navigate = useNavigate();
 
   const links = useMemo(() => {
@@ -33,8 +34,13 @@ export default function Sidebar() {
     return menu.filter((item) => !(isCashier && item.adminOnly));
   }, [user?.role]);
 
-  const onLogout = () => {
-    logout();
+  const onLogout = async () => {
+    try {
+      await logoutRequest();
+    } catch {
+      // Siempre limpiar estado local aunque falle el endpoint
+    }
+    clearAuth();
     navigate('/login');
   };
 
