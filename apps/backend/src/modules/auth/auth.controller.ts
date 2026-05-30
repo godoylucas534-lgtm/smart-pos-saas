@@ -1,4 +1,5 @@
 ﻿import {
+  Get,
   Controller,
   Post,
   Body,
@@ -43,6 +44,13 @@ export class AuthController {
     }
 
     return result;
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  async me(@Request() req: any) {
+    return this.authService.getSessionContext(req.user);
   }
 
   @UseGuards(AuthGuard('jwt'))

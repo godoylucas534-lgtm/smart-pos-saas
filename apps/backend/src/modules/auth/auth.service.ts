@@ -153,4 +153,14 @@ export class AuthService {
   async validateJwtPayload(payload: any): Promise<User | null> {
     return this.userRepo.findOne({ where: { id: payload.sub, isActive: true } });
   }
+
+  async getSessionContext(user: User): Promise<{ user: Partial<User>; subscription?: any }> {
+    const subscription = user.storeId
+      ? await this.saasService.ensureTrialForStore(user.storeId)
+      : null;
+    return {
+      user: user.toJSON(),
+      subscription,
+    };
+  }
 }

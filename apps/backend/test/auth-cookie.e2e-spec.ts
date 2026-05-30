@@ -144,4 +144,23 @@ describe('Auth Email Normalization E2E', () => {
     expect(login.status).toBe(200);
     expect(String(login.body?.user?.email || '').toLowerCase()).toBe(normalized);
   });
+
+  it('login y luego GET /auth/me devuelve 200 con user correcto', async () => {
+    const login = await request(app.getHttpServer()).post('/api/v1/auth/login').send({
+      email: 'admin.a@e2e.local',
+      password: 'Admin1234',
+    });
+
+    expect(login.status).toBe(200);
+    const accessToken = login.body?.accessToken as string;
+    expect(accessToken).toBeDefined();
+
+    const me = await request(app.getHttpServer())
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(me.status).toBe(200);
+    expect(me.body?.user?.email).toBe('admin.a@e2e.local');
+    expect(me.body?.user?.storeId).toBeDefined();
+  });
 });
