@@ -163,4 +163,27 @@ describe('Auth Email Normalization E2E', () => {
     expect(me.body?.user?.email).toBe('admin.a@e2e.local');
     expect(me.body?.user?.storeId).toBeDefined();
   });
+
+  it('login -> refresh -> endpoint protegido PASS', async () => {
+    const login = await request(app.getHttpServer()).post('/api/v1/auth/login').send({
+      email: 'admin.a@e2e.local',
+      password: 'Admin1234',
+    });
+    expect(login.status).toBe(200);
+    const accessToken = login.body?.accessToken as string;
+    expect(accessToken).toBeDefined();
+
+    const refresh = await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({});
+    expect(refresh.status).toBe(200);
+    expect(refresh.body?.accessToken).toBeDefined();
+
+    const me = await request(app.getHttpServer())
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${refresh.body.accessToken}`);
+    expect(me.status).toBe(200);
+    expect(me.body?.user?.email).toBe('admin.a@e2e.local');
+  });
 });

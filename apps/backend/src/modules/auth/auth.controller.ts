@@ -5,17 +5,22 @@
   Body,
   UseGuards,
   Request,
+  Res,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterStoreDto } from './dto/register-store.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Controller('auth')
 export class AuthController {
+  private readonly authCookieName = process.env.AUTH_COOKIE_NAME || 'pos_at';
+  private readonly isProd = process.env.NODE_ENV === 'production';
+
   constructor(
     private authService: AuthService,
     private auditLogsService: AuditLogsService,
@@ -51,6 +56,27 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async me(@Request() req: any) {
     return this.authService.getSessionContext(req.user);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.login(req.user);
+
+    const cookieHeader = String(req.headers?.cookie || '');
+    const hasAuthCookie = cookieHeader.includes(`${this.authCookieName}=`);
+    if (hasAuthCookie) {
+      res.cookie(this.authCookieName, result.accessToken, {
+        httpOnly: true,
+        secure: this.isProd,
+        sameSite: 'none',
+        path: '/',
+        maxAge: 8 * 60 * 60 * 1000,
+      });
+    }
+
+    return result;
   }
 
   @UseGuards(AuthGuard('jwt'))
