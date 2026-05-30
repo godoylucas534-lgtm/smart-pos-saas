@@ -10,6 +10,7 @@ import {
 } from '@/features/products/hooks/useProductsQueries';
 import AdaptiveDataTable, { type DataColumn } from '@/components/ui/AdaptiveDataTable';
 import { formatCurrencyPYG, formatStockInt } from '@/lib/utils';
+import { buildProductPayload } from '@/features/products/api/products.api';
 
 interface Product {
   id: string;
@@ -123,29 +124,27 @@ export default function ProductsPage() {
     if (Number(form.stock || 0) < 0) return toast.error('Stock no puede ser negativo');
 
     try {
-      const optionalText = (value?: string) => {
-        const trimmed = value?.trim();
-        return trimmed ? trimmed : undefined;
-      };
-      const payload = {
-        ...form,
-        name: form.name.trim(),
-        description: optionalText(form.description),
-        categoryId: optionalText(form.categoryId),
-        brand: optionalText(form.brand),
-        supplier: optionalText(form.supplier),
-        sku: optionalText(form.sku),
-        barcode: optionalText(form.barcode),
-        unit: form.unit || 'unidad',
-        costPrice: Number(form.costPrice || 0),
-        salePrice: Number(form.salePrice || 0),
-        stock: Number(form.stock || 0),
-        stockMin: Number(form.stockMin || 0),
-        taxRate: Number(form.taxRate || 0),
-        imageUrl: optionalText(form.imageUrl),
-        metadata: (form as any).notes?.trim() ? { notes: (form as any).notes.trim() } : undefined,
-      };
-      delete (payload as any).notes;
+      const payload = buildProductPayload({
+        name: form.name,
+        sku: form.sku,
+        description: form.description,
+        barcode: form.barcode,
+        categoryId: form.categoryId,
+        brand: form.brand,
+        supplier: form.supplier,
+        costPrice: form.costPrice,
+        salePrice: form.salePrice,
+        stock: form.stock,
+        stockMin: form.stockMin,
+        taxRate: form.taxRate,
+        unit: form.unit,
+        trackStock: form.trackStock,
+        isBulk: form.isBulk,
+        imageUrl: form.imageUrl,
+        notes: (form as any).notes,
+        isActive: form.isActive,
+      });
+      console.debug('[ProductsPage] update payload', payload);
 
       await saveMutation.mutateAsync({ id: editing?.id, payload });
       setShowModal(false);
