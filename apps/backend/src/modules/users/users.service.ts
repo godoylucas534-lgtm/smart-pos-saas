@@ -15,6 +15,19 @@ export class UsersService {
     @InjectRepository(User) private userRepo: Repository<User>,
   ) {}
 
+  private normalizeEmail(email: string): string {
+    return String(email || '').trim().toLowerCase();
+  }
+
+  private async findUserByEmailInsensitive(email: string, storeId: string): Promise<User | null> {
+    const normalizedEmail = this.normalizeEmail(email);
+    return this.userRepo
+      .createQueryBuilder('u')
+      .where('LOWER(TRIM(u.email)) = :emailNormalized', { emailNormalized: normalizedEmail })
+      .andWhere('u.storeId = :storeId', { storeId })
+      .getOne();
+  }
+
   async findByStore(storeId: string): Promise<User[]> {
     const users = await this.userRepo.find({
       where: { storeId },
@@ -28,16 +41,15 @@ export class UsersService {
       throw new BadRequestException('No puedes crear super_admin desde este endpoint.');
     }
 
-    const exists = await this.userRepo.findOne({
-      where: { email: dto.email, storeId },
-    });
+    const exists = await this.findUserByEmailInsensitive(dto.email, storeId);
     if (exists) throw new ConflictException('Este email ya existe en la tienda.');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
+    const normalizedEmail = this.normalizeEmail(dto.email);
     const user = this.userRepo.create({
       firstName: dto.firstName,
       lastName: dto.lastName,
-      email: dto.email,
+      email: normalizedEmail,
       passwordHash,
       role: dto.role,
       storeId,
@@ -61,9 +73,10 @@ export class UsersService {
       throw new BadRequestException('No puedes asignar super_admin desde este endpoint.');
     }
 
-    if (patch.email && patch.email !== user.email) {
-      const exists = await this.userRepo.findOne({ where: { storeId, email: patch.email } });
+    if (patch.email && this.normalizeEmail(patch.email) !== this.normalizeEmail(user.email)) {
+      const exists = await this.findUserByEmailInsensitive(patch.email, storeId);
       if (exists) throw new ConflictException('Este email ya existe en la tienda.');
+      patch.email = this.normalizeEmail(patch.email);
     }
 
     if (patch.password) {

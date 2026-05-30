@@ -1,6 +1,10 @@
 ﻿import { INestApplication } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { createTestingApp, resetAndSeed } from './e2e-helpers';
+import { Store } from '../src/modules/stores/entities/store.entity';
+import { User } from '../src/modules/users/user.entity';
+import { UserRole } from '../src/core/guards/roles.guard';
 
 const request = require('supertest');
 
@@ -105,5 +109,39 @@ describe('Auth Email Normalization E2E', () => {
 
     expect(login.status).toBe(200);
     expect(login.body?.user?.email).toBe(email);
+  });
+
+  it('usuario guardado con mayúsculas permite login en minúsculas', async () => {
+    const storeRepo = dataSource.getRepository(Store);
+    const userRepo = dataSource.getRepository(User);
+    const stamp = Date.now();
+    const mixedEmail = `Juan.Test.${stamp}@Mail.com`;
+    const normalized = `juan.test.${stamp}@mail.com`;
+    const password = 'Admin1234';
+
+    const store = await storeRepo.save(
+      storeRepo.create({ name: `Legacy Store ${stamp}`, slug: `legacy-store-${stamp}`, currency: 'PYG', isActive: true }),
+    );
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    await userRepo.save(
+      userRepo.create({
+        firstName: 'Juan',
+        lastName: 'Test',
+        email: mixedEmail,
+        passwordHash,
+        role: UserRole.STORE_ADMIN,
+        storeId: store.id,
+        isActive: true,
+      }),
+    );
+
+    const login = await request(app.getHttpServer()).post('/api/v1/auth/login').send({
+      email: normalized,
+      password,
+    });
+
+    expect(login.status).toBe(200);
+    expect(String(login.body?.user?.email || '').toLowerCase()).toBe(normalized);
   });
 });

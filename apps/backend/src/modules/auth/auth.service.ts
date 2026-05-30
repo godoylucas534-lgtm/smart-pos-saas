@@ -29,11 +29,23 @@ export class AuthService {
     return String(email || '').trim().toLowerCase();
   }
 
+  private async findUserByEmailInsensitive(normalizedEmail: string, storeId?: string): Promise<User | null> {
+    const qb = this.userRepo
+      .createQueryBuilder('u')
+      .where('LOWER(TRIM(u.email)) = :emailNormalized', { emailNormalized: normalizedEmail });
+
+    if (storeId !== undefined) {
+      qb.andWhere('u.storeId = :storeId', { storeId });
+    }
+
+    return qb.getOne();
+  }
+
   async validateUser(email: string, password: string): Promise<User | null> {
     const normalizedEmail = this.normalizeEmail(email);
     this.logger.debug(`[auth.login] email_normalized=${normalizedEmail}`);
 
-    const user = await this.userRepo.findOne({ where: { email: normalizedEmail } });
+    const user = await this.findUserByEmailInsensitive(normalizedEmail);
     if (!user) {
       this.logger.warn(`[auth.login] user_not_found email=${normalizedEmail}`);
       return null;
@@ -88,9 +100,7 @@ export class AuthService {
       );
     }
 
-    const existingUser = await this.userRepo.findOne({
-      where: { email: normalizedEmail },
-    });
+    const existingUser = await this.findUserByEmailInsensitive(normalizedEmail);
     if (existingUser && existingUser.storeId) {
       throw new ConflictException('Este email ya tiene una cuenta.');
     }
@@ -125,9 +135,7 @@ export class AuthService {
     const store = await this.storeRepo.findOne({ where: { id: storeId } });
     if (!store) throw new NotFoundException('Tienda no encontrada.');
 
-    const exists = await this.userRepo.findOne({
-      where: { email: normalizedEmail, storeId },
-    });
+    const exists = await this.findUserByEmailInsensitive(normalizedEmail, storeId);
     if (exists) throw new ConflictException('Este email ya existe en la tienda.');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
