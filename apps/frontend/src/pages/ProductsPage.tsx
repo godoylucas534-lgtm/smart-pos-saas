@@ -9,6 +9,7 @@ import {
   useSaveProductMutation,
 } from '@/features/products/hooks/useProductsQueries';
 import AdaptiveDataTable, { type DataColumn } from '@/components/ui/AdaptiveDataTable';
+import { formatCurrencyPYG, formatStockInt } from '@/lib/utils';
 
 interface Product {
   id: string;
@@ -82,8 +83,9 @@ export default function ProductsPage() {
   const columns: DataColumn<Product>[] = [
     { key: 'product', title: 'Producto', render: (p) => p.name },
     { key: 'sku', title: 'SKU', render: (p) => p.sku || '-' },
-    { key: 'price', title: 'Precio', align: 'right', render: (p) => formatPrice(p.salePrice) },
-    { key: 'stock', title: 'Stock', align: 'right', render: (p) => p.stock },
+    { key: 'price', title: 'Precio', align: 'right', render: (p) => formatCurrencyPYG(p.salePrice) },
+    { key: 'stock', title: 'Stock', align: 'right', render: (p) => formatStockInt(p.stock) },
+    { key: 'stockMin', title: 'Stock min', align: 'right', render: (p) => formatStockInt(p.stockMin) },
     { key: 'status', title: 'Estado', align: 'center', render: (p) => (p.isActive ? 'Activo' : 'Inactivo') },
     {
       key: 'actions',
@@ -98,9 +100,6 @@ export default function ProductsPage() {
     },
   ];
 
-  const formatPrice = (p: number) =>
-    new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(p || 0);
-
   const margin = Number(form.costPrice || 0) > 0
     ? ((Number(form.salePrice || 0) - Number(form.costPrice || 0)) / Number(form.costPrice || 1)) * 100
     : 0;
@@ -110,6 +109,8 @@ export default function ProductsPage() {
     setForm({
       ...EMPTY_FORM,
       ...p,
+      stock: Number(p.stock || 0),
+      stockMin: Number(p.stockMin || 0),
       categoryId: p.category?.id || p.categoryId || '',
       notes: (p as any)?.metadata?.notes || (p as any)?.notes || '',
     } as any);
@@ -177,9 +178,9 @@ export default function ProductsPage() {
                 columns={[
                   { key: 'date', title: 'Fecha', render: (m: any) => new Date(m.createdAt).toLocaleString('es-PY') },
                   { key: 'type', title: 'Tipo', render: (m: any) => m.type },
-                  { key: 'qty', title: 'Cantidad', align: 'right', render: (m: any) => m.quantity },
-                  { key: 'prev', title: 'Anterior', align: 'right', render: (m: any) => m.previousStock },
-                  { key: 'next', title: 'Nuevo', align: 'right', render: (m: any) => m.newStock },
+                  { key: 'qty', title: 'Cantidad', align: 'right', render: (m: any) => formatStockInt(m.quantity) },
+                  { key: 'prev', title: 'Anterior', align: 'right', render: (m: any) => formatStockInt(m.previousStock) },
+                  { key: 'next', title: 'Nuevo', align: 'right', render: (m: any) => formatStockInt(m.newStock) },
                   { key: 'ref', title: 'Referencia', render: (m: any) => m.reference || '-' },
                 ]}
                 rows={history}
@@ -223,8 +224,8 @@ export default function ProductsPage() {
             </div>
             <h3 className="text-sm mb-2" style={{ color: 'var(--text-muted)' }}>Stock</h3>
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <input type="number" className="ui-input" placeholder="Stock actual" value={form.stock || 0} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
-              <input type="number" className="ui-input" placeholder="Stock minimo" value={form.stockMin || 0} onChange={(e) => setForm({ ...form, stockMin: Number(e.target.value) })} />
+              <input type="number" min={0} step={1} inputMode="numeric" className="ui-input" placeholder="Stock actual" value={form.stock || 0} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
+              <input type="number" min={0} step={1} inputMode="numeric" className="ui-input" placeholder="Stock minimo" value={form.stockMin || 0} onChange={(e) => setForm({ ...form, stockMin: Number(e.target.value) })} />
               <select className="ui-input" value={form.unit || 'unidad'} onChange={(e) => setForm({ ...form, unit: e.target.value })}>
                 <option value="unidad">Unidad</option><option value="kg">Kg</option><option value="gramo">Gramo</option><option value="litro">Litro</option><option value="metro">Metro</option><option value="caja">Caja</option><option value="par">Par</option><option value="docena">Docena</option>
               </select>
