@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { Product } from '../src/modules/products/entities/product.entity';
 import { StockMovement } from '../src/modules/stock-movements/entities/stock-movement.entity';
 import { CreditAccount } from '../src/modules/credit-accounts/entities/credit-account.entity';
+import { AuditLog } from '../src/modules/audit-logs/entities/audit-log.entity';
 import { createTestingApp, resetAndSeed, SeedContext } from './e2e-helpers';
 
 describe('POS Critical E2E', () => {
@@ -303,6 +304,85 @@ describe('POS Critical E2E', () => {
         customerId: seed.customerA.id,
       });
       expect(Number(account.balance)).toBe(23000);
+    });
+  });
+
+  describe('Credito End-to-End', () => {
+    it('crea cliente y producto, vende a credito, valida pending y pago parcial', async () => {
+      await openCashRegister(adminToken);
+      const stamp = Date.now();
+
+      const customerRes = await req('/api/v1/customers', {
+        method: 'POST',
+        token: adminToken,
+        body: {
+          firstName: 'Credito',
+          lastName: `E2E ${stamp}`,
+          document: `CRED-${stamp}`,
+          phone: `0991${String(stamp).slice(-6)}`,
+        },
+      });
+      expect(customerRes.status).toBe(201);
+      const customerId = customerRes.body?.id as string;
+      expect(customerId).toBeTruthy();
+
+      const productRes = await req('/api/v1/products', {
+        method: 'POST',
+        token: adminToken,
+        body: {
+          name: `Prod Credito ${stamp}`,
+          sku: `PC-${stamp}`,
+          costPrice: 5000,
+          salePrice: 11000,
+          taxRate: 10,
+          stock: 30,
+          stockMin: 2,
+          unit: 'unidad',
+          trackStock: true,
+        },
+      });
+      expect(productRes.status).toBe(201);
+      const productId = productRes.body?.id as string;
+      expect(productId).toBeTruthy();
+
+      const saleRes = await req('/api/v1/sales', {
+        method: 'POST',
+        token: adminToken,
+        body: {
+          paymentMethod: 'credit',
+          customerId,
+          items: [{ productId, quantity: 2, unitPrice: 11000 }],
+        },
+      });
+      expect(saleRes.status).toBe(201);
+
+      const pendingBefore = await req('/api/v1/credit-accounts/pending', { token: adminToken });
+      expect(pendingBefore.status).toBe(200);
+      const accountBefore = (pendingBefore.body || []).find((a: any) => a.customerId === customerId);
+      expect(accountBefore).toBeTruthy();
+      expect(Number(accountBefore.balance)).toBeGreaterThan(0);
+
+      const partialAmount = Math.floor(Number(accountBefore.balance) / 2);
+      expect(partialAmount).toBeGreaterThan(0);
+      const payRes = await req('/api/v1/credit-accounts/pay', {
+        method: 'POST',
+        token: adminToken,
+        body: { customerId, amount: partialAmount },
+      });
+      expect(payRes.status).toBe(201);
+
+      const pendingAfter = await req('/api/v1/credit-accounts/pending', { token: adminToken });
+      expect(pendingAfter.status).toBe(200);
+      const accountAfter = (pendingAfter.body || []).find((a: any) => a.customerId === customerId);
+      expect(accountAfter).toBeTruthy();
+      expect(Number(accountAfter.balance)).toBe(Number(accountBefore.balance) - partialAmount);
+
+      const creditPaymentAudit = await dataSource.getRepository(AuditLog).findOne({
+        where: { storeId: seed.storeA.id, action: 'credit_payment', userId: seed.adminA.id },
+        order: { createdAt: 'DESC' },
+      });
+      expect(creditPaymentAudit).toBeTruthy();
+      expect(String(creditPaymentAudit?.newValue || '')).toContain(String(partialAmount));
     });
   });
 
