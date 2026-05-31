@@ -18,6 +18,14 @@ export class ProductsService {
     private readonly stockMovementsService: StockMovementsService,
   ) {}
 
+  private serializeProduct(product: Product): Product {
+    return {
+      ...product,
+      stock: Number(product.stock || 0),
+      stockMin: Number(product.stockMin || 0),
+    };
+  }
+
   async findAll(storeId: string, query: QueryProductsDto) {
     const { search, categoryId, isActive, lowStock, page = 1, limit = 20 } = query;
     const qb = this.productRepo.createQueryBuilder('p').leftJoinAndSelect('p.category', 'cat').where('p.storeId = :storeId', { storeId });
@@ -27,19 +35,19 @@ export class ProductsService {
     if (lowStock) qb.andWhere('p.trackStock = true AND p.stock <= p.stockMin');
     const total = await qb.getCount();
     const items = await qb.orderBy('p.name', 'ASC').skip((page - 1) * limit).take(limit).getMany();
-    return { items, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return { items: items.map((item) => this.serializeProduct(item)), pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async findByBarcode(storeId: string, barcode: string): Promise<Product> {
     const product = await this.productRepo.findOne({ where: { storeId, barcode, isActive: true }, relations: ['category'] });
     if (!product) throw new NotFoundException(`Producto con barcode "${barcode}" no encontrado.`);
-    return product;
+    return this.serializeProduct(product);
   }
 
   async findOne(storeId: string, id: string): Promise<Product> {
     const product = await this.productRepo.findOne({ where: { id, storeId }, relations: ['category'] });
     if (!product) throw new NotFoundException('Producto no encontrado.');
-    return product;
+    return this.serializeProduct(product);
   }
 
   async findMovements(storeId: string, productId: string) {
@@ -54,10 +62,10 @@ export class ProductsService {
     }
     if (dto.categoryId) {
       const cat = await this.categoryRepo.findOne({ where: { id: dto.categoryId, storeId } });
-      if (!cat) throw new NotFoundException('Categoría no encontrada.');
+      if (!cat) throw new NotFoundException('CategorÃ­a no encontrada.');
     }
     const product = this.productRepo.create({ ...dto, storeId });
-    return this.productRepo.save(product);
+    return this.serializeProduct(await this.productRepo.save(product));
   }
 
   async update(storeId: string, id: string, dto: UpdateProductDto, userId?: string, ip?: string): Promise<Product> {
@@ -76,7 +84,7 @@ export class ProductsService {
     }
 
     Object.assign(product, dto);
-    return this.productRepo.save(product);
+    return this.serializeProduct(await this.productRepo.save(product));
   }
 
   async remove(storeId: string, id: string): Promise<void> {
@@ -95,7 +103,7 @@ export class ProductsService {
 
   async updateCategory(storeId: string, id: string, dto: Partial<Category>) {
     const cat = await this.categoryRepo.findOne({ where: { id, storeId } });
-    if (!cat) throw new NotFoundException('Categoría no encontrada.');
+    if (!cat) throw new NotFoundException('CategorÃ­a no encontrada.');
     Object.assign(cat, dto);
     return this.categoryRepo.save(cat);
   }

@@ -389,6 +389,42 @@ describe('POS Critical E2E', () => {
   });
 
   describe('Productos', () => {
+    it('create/update product stock=10 stockMin=5 y GET /products devuelve numeros', async () => {
+      const stamp = Date.now();
+      const create = await req('/api/v1/products', {
+        method: 'POST',
+        token: adminToken,
+        body: {
+          name: `Stock Numeric ${stamp}`,
+          sku: `SN-${stamp}`,
+          costPrice: 5000,
+          salePrice: 10000,
+          taxRate: 10,
+          stock: 10,
+          stockMin: 5,
+          unit: 'unidad',
+          trackStock: true,
+        },
+      });
+      expect(create.status).toBe(201);
+
+      const update = await req(`/api/v1/products/${create.body.id}`, {
+        method: 'PUT',
+        token: adminToken,
+        body: { stock: 10, stockMin: 5 },
+      });
+      expect(update.status).toBe(200);
+
+      const list = await req('/api/v1/products', { token: adminToken });
+      expect(list.status).toBe(200);
+      const product = (list.body?.items || []).find((item: any) => item.id === create.body.id);
+      expect(product).toBeTruthy();
+      expect(product.stock).toBe(10);
+      expect(product.stockMin).toBe(5);
+      expect(typeof product.stock).toBe('number');
+      expect(typeof product.stockMin).toBe('number');
+    });
+
     it('actualizar solo stock y stockMin permite opcionales vacios del formulario', async () => {
       const res = await req(`/api/v1/products/${seed.productA.id}`, {
         method: 'PUT',
