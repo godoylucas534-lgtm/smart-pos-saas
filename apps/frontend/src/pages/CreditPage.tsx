@@ -29,11 +29,19 @@ export default function CreditPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const mapAccount = (item: any): CreditAccount => ({
-    id: String(item?.id ?? ''),
+    id: String(item?.id ?? item?.customerId ?? ''),
     storeId: item?.storeId ? String(item.storeId) : undefined,
     customerId: String(item?.customerId ?? item?.customer?.id ?? ''),
     balance: Number(item?.balance ?? 0),
-    customer: item?.customer ?? null,
+    customer: item?.customer
+      ? item.customer
+      : {
+          id: item?.customerId ? String(item.customerId) : undefined,
+          firstName: item?.firstName,
+          lastName: item?.lastName,
+          phone: item?.phone,
+          document: item?.document,
+        },
     lastPaymentAt: item?.lastPaymentAt ?? undefined,
     createdAt: item?.createdAt ?? undefined,
   });
@@ -67,7 +75,7 @@ export default function CreditPage() {
       }
 
       const list = Array.isArray(data) ? data : data?.items || [];
-      const mapped = Array.isArray(list) ? list.map(mapAccount).filter((entry) => entry.id && entry.customerId) : [];
+      const mapped = Array.isArray(list) ? list.map(mapAccount).filter((entry) => entry.customerId) : [];
       setAccounts(mapped);
     } catch (error: any) {
       const message = error?.message || 'Error al cargar creditos';
@@ -141,7 +149,7 @@ export default function CreditPage() {
           <AdaptiveDataTable
             columns={columns}
             rows={accounts}
-            rowKey={(a) => a.id}
+            rowKey={(a) => `${a.id}-${a.customerId}`}
             emptyMessage="No hay saldos pendientes."
             density="compact"
           />

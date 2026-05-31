@@ -37,6 +37,8 @@ describe('ProductsPage render stock/price', () => {
 
     expect(screen.getByText('10')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.queryByText('10.000')).not.toBeInTheDocument();
+    expect(screen.queryByText('5.000')).not.toBeInTheDocument();
     expect(screen.getByText('Gs. 8.000')).toBeInTheDocument();
   });
 });

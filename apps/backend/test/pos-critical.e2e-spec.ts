@@ -358,6 +358,7 @@ describe('POS Critical E2E', () => {
 
       const pendingBefore = await req('/api/v1/credit-accounts/pending', { token: adminToken });
       expect(pendingBefore.status).toBe(200);
+      console.log('EVIDENCE_CREDIT_PENDING_BEFORE', JSON.stringify(pendingBefore.body));
       const accountBefore = (pendingBefore.body || []).find((a: any) => a.customerId === customerId);
       expect(accountBefore).toBeTruthy();
       expect(Number(accountBefore.balance)).toBeGreaterThan(0);
@@ -375,6 +376,7 @@ describe('POS Critical E2E', () => {
 
       const pendingAfter = await req('/api/v1/credit-accounts/pending', { token: adminToken });
       expect(pendingAfter.status).toBe(200);
+      console.log('EVIDENCE_CREDIT_PENDING_AFTER', JSON.stringify(pendingAfter.body));
       const accountAfter = (pendingAfter.body || []).find((a: any) => a.customerId === customerId);
       expect(accountAfter).toBeTruthy();
       expect(Number(accountAfter.balance)).toBe(Number(accountBefore.balance) - partialAmount);
@@ -417,12 +419,15 @@ describe('POS Critical E2E', () => {
 
       const list = await req('/api/v1/products', { token: adminToken });
       expect(list.status).toBe(200);
+      console.log('EVIDENCE_PRODUCTS_LIST', JSON.stringify(list.body));
       const product = (list.body?.items || []).find((item: any) => item.id === create.body.id);
       expect(product).toBeTruthy();
       expect(product.stock).toBe(10);
       expect(product.stockMin).toBe(5);
       expect(typeof product.stock).toBe('number');
       expect(typeof product.stockMin).toBe('number');
+      expect(String(product.stock)).not.toContain('.');
+      expect(String(product.stockMin)).not.toContain('.');
     });
 
     it('actualizar solo stock y stockMin permite opcionales vacios del formulario', async () => {
@@ -456,6 +461,53 @@ describe('POS Critical E2E', () => {
       });
       expect(res.status).toBe(400);
       expect(String(res.body?.message || '')).toContain('salePrice debe ser mayor a 0');
+    });
+
+    it('create/update rechaza campos prohibidos fuera del DTO', async () => {
+      const createPayload = {
+        name: `Strict DTO ${Date.now()}`,
+        costPrice: 5000,
+        salePrice: 10000,
+        stock: 10,
+        stockMin: 5,
+        unit: 'unidad',
+      };
+      console.log('EVIDENCE_PRODUCTS_CREATE_PAYLOAD', JSON.stringify(createPayload));
+      const create = await req('/api/v1/products', {
+        method: 'POST',
+        token: adminToken,
+        body: createPayload,
+      });
+      expect(create.status).toBe(201);
+
+      const forbiddenCreatePayload = { ...createPayload, forbiddenField: 'nope' };
+      console.log('EVIDENCE_PRODUCTS_CREATE_FORBIDDEN_PAYLOAD', JSON.stringify(forbiddenCreatePayload));
+      const forbiddenCreate = await req('/api/v1/products', {
+        method: 'POST',
+        token: adminToken,
+        body: forbiddenCreatePayload,
+      });
+      expect(forbiddenCreate.status).toBe(400);
+      expect(String(forbiddenCreate.body?.message || '')).toContain('forbiddenField');
+
+      const updatePayload = { stock: 11, stockMin: 6 };
+      console.log('EVIDENCE_PRODUCTS_UPDATE_PAYLOAD', JSON.stringify(updatePayload));
+      const update = await req(`/api/v1/products/${create.body.id}`, {
+        method: 'PUT',
+        token: adminToken,
+        body: updatePayload,
+      });
+      expect(update.status).toBe(200);
+
+      const forbiddenUpdatePayload = { ...updatePayload, forbiddenField: true };
+      console.log('EVIDENCE_PRODUCTS_UPDATE_FORBIDDEN_PAYLOAD', JSON.stringify(forbiddenUpdatePayload));
+      const forbiddenUpdate = await req(`/api/v1/products/${create.body.id}`, {
+        method: 'PUT',
+        token: adminToken,
+        body: forbiddenUpdatePayload,
+      });
+      expect(forbiddenUpdate.status).toBe(400);
+      expect(String(forbiddenUpdate.body?.message || '')).toContain('forbiddenField');
     });
   });
 
