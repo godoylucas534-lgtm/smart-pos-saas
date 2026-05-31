@@ -1,28 +1,31 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { apiGet } from '@/shared/api/client';
-import { useDashboardQuery } from '@/features/dashboard/hooks/useDashboardQuery';
+import { dashboardRetryPolicy, useDashboardQueries } from '@/features/dashboard/hooks/useDashboardQuery';
 import type { OperationalInsight } from '../types';
 
 export function useOperationalInsights() {
   const today = new Date().toISOString().split('T')[0];
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
-  const todayQuery = useDashboardQuery(today);
-  const yesterdayQuery = useDashboardQuery(yesterday);
+  const todayDashboard = useDashboardQueries(today);
+  const yesterdayDashboard = useDashboardQueries(yesterday);
   const [stockQuery, creditQuery, cashQuery] = useQueries({
     queries: [
       {
         queryKey: ['alerts', 'stock-low'],
         queryFn: () => apiGet<{ items: any[] }>('/products', { lowStock: true, limit: 10 }),
+        retry: dashboardRetryPolicy,
       },
       {
         queryKey: ['alerts', 'credits-pending'],
         queryFn: () => apiGet<any[]>('/credit-accounts/pending'),
+        retry: dashboardRetryPolicy,
       },
       {
         queryKey: ['alerts', 'cash-active'],
         queryFn: () => apiGet<{ id?: string; createdAt?: string }>('/cash-register/active'),
+        retry: dashboardRetryPolicy,
       },
     ],
   });
@@ -30,8 +33,8 @@ export function useOperationalInsights() {
   const insights = useMemo<OperationalInsight[]>(() => {
     const list: OperationalInsight[] = [];
 
-    const todaySummary = todayQuery.data?.summary ?? {};
-    const yesterdaySummary = yesterdayQuery.data?.summary ?? {};
+    const todaySummary = todayDashboard.summaryQuery.data ?? {};
+    const yesterdaySummary = yesterdayDashboard.summaryQuery.data ?? {};
     const todayRevenue = Number(todaySummary?.totalRevenue || 0);
     const yesterdayRevenue = Number(yesterdaySummary?.totalRevenue || 0);
     const todaySales = Number(todaySummary?.totalSales || 0);
@@ -59,7 +62,7 @@ export function useOperationalInsights() {
       });
     }
 
-    const top = (todayQuery.data?.top || []).map((x: any) => ({
+    const top = (todayDashboard.topQuery.data || []).map((x: any) => ({
       name: x.productName,
       qty: Number(x.quantity || 0),
     }));
@@ -74,7 +77,7 @@ export function useOperationalInsights() {
       });
     }
 
-    const hourly = (todayQuery.data?.hourly || []).map((x: any) => Number(x.total || 0));
+    const hourly = (todayDashboard.hourlyQuery.data || []).map((x: any) => Number(x.total || 0));
     if (hourly.length > 3) {
       const firstHalf = hourly.slice(0, Math.floor(hourly.length / 2)).reduce((acc, val) => acc + val, 0);
       const secondHalf = hourly.slice(Math.floor(hourly.length / 2)).reduce((acc, val) => acc + val, 0);
@@ -140,19 +143,18 @@ export function useOperationalInsights() {
     cashQuery.data?.createdAt,
     creditQuery.data,
     stockQuery.data?.items,
-    todayQuery.data?.hourly,
-    todayQuery.data?.summary,
-    todayQuery.data?.top,
-    yesterdayQuery.data?.summary,
+    todayDashboard.hourlyQuery.data,
+    todayDashboard.summaryQuery.data,
+    todayDashboard.topQuery.data,
+    yesterdayDashboard.summaryQuery.data,
   ]);
 
   const isLoading =
-    todayQuery.isLoading ||
-    yesterdayQuery.isLoading ||
+    todayDashboard.summaryQuery.isLoading ||
+    yesterdayDashboard.summaryQuery.isLoading ||
     stockQuery.isLoading ||
     creditQuery.isLoading ||
     cashQuery.isLoading;
 
   return { insights, isLoading };
 }
-
