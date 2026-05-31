@@ -4,12 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "build:win": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json && node ../../node_modules/vite/bin/vite.js build --config vite.config.ts",
+    "dev": "vite --config vite.config.mjs",
+    "build": "tsc && vite build --config vite.config.mjs",
+    "build:win": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json && node ../../node_modules/vite/bin/vite.js build --config vite.config.mjs",
     "clean:cache": "node -e \"const fs=require('fs');['node_modules/.vite','.vite'].forEach((p)=>{try{fs.rmSync(p,{recursive:true,force:true});console.log('removed',p);}catch(e){console.log('skip',p);}})\"",
     "rebuild:win": "npm run clean:cache && npm run build:win",
-    "preview": "vite preview",
+    "preview": "vite preview --config vite.config.mjs",
     "test": "vitest run"
   },
   "dependencies": {
