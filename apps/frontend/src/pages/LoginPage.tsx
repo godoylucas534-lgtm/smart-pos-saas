@@ -6,6 +6,104 @@ import { useAuthStore } from '../stores/auth.store';
 import { APP_NAME } from '../config/env';
 import { useLoginMutation } from '@/features/auth/hooks/useLoginMutation';
 
+type LoginErrorDiagnostics = {
+  status?: number;
+  code?: string;
+  message: string;
+  requestUrl?: string;
+  type: 'network' | 'cors' | '4xx' | '5xx' | 'unknown';
+  uiMessage: string;
+};
+
+function resolveLoginError(error: unknown): LoginErrorDiagnostics {
+  if (!isAxiosError(error)) {
+    return {
+      type: 'unknown',
+      message: 'Unknown error',
+      uiMessage: 'No se pudo iniciar sesion.',
+    };
+  }
+
+  const status = error.response?.status;
+  const payloadMessage = error.response?.data?.message;
+  const backendMessage = Array.isArray(payloadMessage) ? payloadMessage.join(', ') : payloadMessage;
+  const code = error.code;
+  const requestUrl = `${error.config?.baseURL || ''}${error.config?.url || ''}` || undefined;
+  const message = backendMessage || error.message || 'Error desconocido';
+
+  if (!error.response) {
+    const maybeCors = code === 'ERR_NETWORK' && typeof navigator !== 'undefined' && navigator.onLine;
+    if (maybeCors) {
+      return {
+        type: 'cors',
+        status,
+        code,
+        message,
+        requestUrl,
+        uiMessage: 'Error CORS/bloqueo del navegador al conectar con API.',
+      };
+    }
+    return {
+      type: 'network',
+      status,
+      code,
+      message,
+      requestUrl,
+      uiMessage: 'Sin respuesta del servidor (red/conectividad).',
+    };
+  }
+
+  if (status === 401) {
+    return {
+      type: '4xx',
+      status,
+      code,
+      message,
+      requestUrl,
+      uiMessage: backendMessage || 'Credenciales incorrectas',
+    };
+  }
+  if (status === 429) {
+    return {
+      type: '4xx',
+      status,
+      code,
+      message,
+      requestUrl,
+      uiMessage: 'Demasiados intentos, espera 1 minuto',
+    };
+  }
+  if (status && status >= 500) {
+    return {
+      type: '5xx',
+      status,
+      code,
+      message,
+      requestUrl,
+      uiMessage: `Error servidor ${status}. Intenta nuevamente.`,
+    };
+  }
+  if (status && status >= 400) {
+    return {
+      type: '4xx',
+      status,
+      code,
+      message,
+      requestUrl,
+      uiMessage: backendMessage || `Solicitud invalida (${status}).`,
+    };
+  }
+
+  return {
+    type: 'unknown',
+    status,
+    code,
+    message,
+    requestUrl,
+    uiMessage: backendMessage || 'No se pudo iniciar sesion.',
+  };
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,37 +125,12 @@ export default function LoginPage() {
       toast.success('Bienvenido!');
       navigate('/pos');
     } catch (error) {
-      if (isAxiosError(error)) {
-        const status = error.response?.status;
-        const payloadMessage = error.response?.data?.message;
-        const message = Array.isArray(payloadMessage) ? payloadMessage.join(', ') : payloadMessage;
-
-        if (status === 401) {
-          const authError = message || 'Credenciales incorrectas';
-          setErrorMessage(authError);
-          toast.error(authError);
-        } else if (status === 429) {
-          const rateLimitError = 'Demasiados intentos, espera 1 minuto';
-          setErrorMessage(rateLimitError);
-          toast.error(rateLimitError);
-        } else if (status && status >= 500) {
-          const serverError = 'Error del servidor (5xx). Revisa backend o intenta nuevamente.';
-          setErrorMessage(serverError);
-          toast.error(serverError);
-        } else if (error.code === 'ECONNABORTED' || !error.response) {
-          const networkError = 'Error de red/conexion. Verifica API_URL y conectividad.';
-          setErrorMessage(networkError);
-          toast.error(networkError);
-        } else {
-          const genericError = message || 'No se pudo iniciar sesion';
-          setErrorMessage(genericError);
-          toast.error(genericError);
-        }
-      } else {
-        const fallbackError = 'No se pudo iniciar sesion';
-        setErrorMessage(fallbackError);
-        toast.error(fallbackError);
-      }
+      const diagnostics = resolveLoginError(error);
+      console.error('[LoginError]', diagnostics);
+      setErrorMessage(
+        `${diagnostics.uiMessage} (${diagnostics.requestUrl || 'URL no disponible'})`,
+      );
+      toast.error(diagnostics.uiMessage);
     } finally {
       setLoading(false);
     }

@@ -56,6 +56,7 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(setAuthMock).toHaveBeenCalledWith(
         { id: 'u1', email: 'admin@test.com', firstName: 'A', lastName: 'B', role: 'store_admin', storeId: 's1' },
+        expect.any(String),
       );
     });
     expect(localStorage.getItem('pos-store')).toBe(JSON.stringify({ id: 's1', name: 'Store One' }));
@@ -88,5 +89,54 @@ describe('LoginPage', () => {
       expect(toastErrorMock).toHaveBeenCalledWith('Credenciales incorrectas');
     });
     expect(navigateMock).not.toHaveBeenCalledWith('/pos');
+  });
+
+  it('login sin response => mensaje de red/conectividad', async () => {
+    mutateAsyncMock.mockRejectedValueOnce(
+      new AxiosError('Network Error', 'ERR_NETWORK', {
+        baseURL: 'https://api.example.com',
+        url: '/auth/login',
+      } as any),
+    );
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('admin@empresa.com'), { target: { value: 'admin@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('********'), { target: { value: 'wrongpass' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar Sesion' }));
+
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith(expect.stringContaining('Error CORS/bloqueo'));
+    });
+  });
+
+  it('login 5xx => mensaje de servidor', async () => {
+    mutateAsyncMock.mockRejectedValueOnce(
+      new AxiosError('Server Error', 'ERR_BAD_RESPONSE', { url: '/auth/login' } as any, undefined, {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: {},
+        config: {} as any,
+        data: { message: 'Backend down' },
+      }),
+    );
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('admin@empresa.com'), { target: { value: 'admin@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('********'), { target: { value: 'pass1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar Sesion' }));
+
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Error servidor 503. Intenta nuevamente.');
+    });
   });
 });
