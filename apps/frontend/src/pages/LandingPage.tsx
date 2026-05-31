@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-const whatsappUrl = 'https://wa.me/595981000000?text=Hola%2C%20quiero%20ver%20como%20funciona%20el%20POS%20inteligente%20para%20mi%20negocio.';
+const whatsappUrl = 'https://wa.me/595971264523?text=Hola%2C%20quiero%20informacion%20del%20POS%20para%20mi%20negocio.';
 
 const benefits = [
   {
