@@ -41,8 +41,8 @@ const optionalText = (value?: string) => {
 };
 
 // Keep update/create payload aligned with backend DTO (no readonly fields).
-export function buildProductPayload(input: ProductFormInput) {
-  return {
+export function buildProductPayload(input: ProductFormInput, options?: { includeIsActive?: boolean }) {
+  const payload = {
     name: (input.name || '').trim(),
     sku: optionalText(input.sku),
     description: optionalText(input.description),
@@ -60,6 +60,9 @@ export function buildProductPayload(input: ProductFormInput) {
     isBulk: Boolean(input.isBulk),
     imageUrl: optionalText(input.imageUrl),
     notes: optionalText(input.notes),
-    isActive: input.isActive === undefined ? true : Boolean(input.isActive),
   };
+  if (options?.includeIsActive) {
+    (payload as any).isActive = input.isActive === undefined ? true : Boolean(input.isActive);
+  }
+  return payload;
 }

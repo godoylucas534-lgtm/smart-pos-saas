@@ -64,4 +64,31 @@ describe('useSaveProductMutation', () => {
     expect(cleanPayload).not.toHaveProperty('controlsStock');
     expect(cleanPayload).toHaveProperty('trackStock', true);
   });
+
+  it('en create no envia isActive en payload', async () => {
+    createProductMock.mockResolvedValueOnce({});
+    const queryClient = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const createPayload = buildProductPayload({
+      name: 'Nuevo',
+      salePrice: 8000,
+      stock: 10,
+      stockMin: 5,
+      trackStock: true,
+      isActive: true,
+    });
+
+    const { result } = renderHook(() => useSaveProductMutation(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({ payload: createPayload });
+    });
+
+    expect(createProductMock).toHaveBeenCalledTimes(1);
+    const sentPayload = createProductMock.mock.calls[0][0];
+    expect(sentPayload).not.toHaveProperty('isActive');
+    expect(sentPayload).toHaveProperty('trackStock', true);
+  });
 });

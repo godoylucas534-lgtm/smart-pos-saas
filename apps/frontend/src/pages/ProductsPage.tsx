@@ -143,7 +143,7 @@ export default function ProductsPage() {
         imageUrl: form.imageUrl,
         notes: (form as any).notes,
         isActive: form.isActive,
-      });
+      }, { includeIsActive: Boolean(editing?.id) });
       console.debug('[ProductsPage] update payload', payload);
 
       await saveMutation.mutateAsync({ id: editing?.id, payload });

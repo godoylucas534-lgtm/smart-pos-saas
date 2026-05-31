@@ -1,7 +1,7 @@
 import { buildProductPayload } from './products.api';
 
 describe('buildProductPayload', () => {
-  it('excluye campos readonly/prohibidos y sanitiza opcionales', () => {
+  it('create payload excluye campos readonly/prohibidos y NO incluye isActive', () => {
     const payload = buildProductPayload({
       id: 'prod-1' as any,
       storeId: 'store-1' as any,
@@ -25,7 +25,6 @@ describe('buildProductPayload', () => {
       isBulk: false,
       imageUrl: '  ',
       notes: ' nota interna ',
-      isActive: true,
     } as any);
 
     expect(payload).toEqual({
@@ -46,7 +45,6 @@ describe('buildProductPayload', () => {
       isBulk: false,
       imageUrl: undefined,
       notes: 'nota interna',
-      isActive: true,
     });
 
     expect(payload).not.toHaveProperty('id');
@@ -56,5 +54,11 @@ describe('buildProductPayload', () => {
     expect(payload).not.toHaveProperty('category');
     expect(payload).not.toHaveProperty('metadata');
     expect(payload).not.toHaveProperty('controlsStock');
+    expect(payload).not.toHaveProperty('isActive');
+  });
+
+  it('update payload incluye isActive cuando se solicita', () => {
+    const payload = buildProductPayload({ name: 'P', salePrice: 8000, isActive: false }, { includeIsActive: true });
+    expect(payload).toHaveProperty('isActive', false);
   });
 });
