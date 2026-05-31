@@ -7,12 +7,14 @@ import {
   SubscriptionStatus,
 } from './entities/store-subscription.entity';
 import { PLAN_FEATURES, SaasFeature } from './saas.constants';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class SaasService {
   constructor(
     @InjectRepository(StoreSubscription)
     private readonly subscriptionRepo: Repository<StoreSubscription>,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   async ensureTrialForStore(storeId: string): Promise<StoreSubscription> {
@@ -73,21 +75,44 @@ export class SaasService {
       .getRawMany();
   }
 
-  async suspend(storeId: string): Promise<StoreSubscription> {
+  async suspend(storeId: string, actorUserId?: string, ip?: string): Promise<StoreSubscription> {
     const subscription = await this.getByStoreIdOrFail(storeId);
+    const oldStatus = subscription.status;
     subscription.status = SubscriptionStatus.SUSPENDED;
     subscription.suspendedAt = new Date();
-    return this.subscriptionRepo.save(subscription);
+    const saved = await this.subscriptionRepo.save(subscription);
+    await this.auditLogsService.recordAudit(
+      storeId,
+      actorUserId,
+      'saas_tenant_suspended',
+      'StoreSubscription',
+      saved.id,
+      { status: oldStatus },
+      { status: saved.status, suspendedAt: saved.suspendedAt },
+      ip,
+    );
+    return saved;
   }
 
-  async reactivate(storeId: string): Promise<StoreSubscription> {
+  async reactivate(storeId: string, actorUserId?: string, ip?: string): Promise<StoreSubscription> {
     const subscription = await this.getByStoreIdOrFail(storeId);
+    const oldStatus = subscription.status;
     subscription.status = SubscriptionStatus.ACTIVE;
     subscription.suspendedAt = null;
     if (!subscription.currentPeriodEndsAt) {
       subscription.currentPeriodEndsAt = new Date();
     }
-    return this.subscriptionRepo.save(subscription);
+    const saved = await this.subscriptionRepo.save(subscription);
+    await this.auditLogsService.recordAudit(
+      storeId,
+      actorUserId,
+      'saas_tenant_reactivated',
+      'StoreSubscription',
+      saved.id,
+      { status: oldStatus },
+      { status: saved.status, suspendedAt: saved.suspendedAt },
+      ip,
+    );
+    return saved;
   }
 }
-

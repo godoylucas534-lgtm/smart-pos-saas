@@ -83,6 +83,16 @@ apiClient.interceptors.response.use(
       useAuthStore.getState().clearAuth();
       localStorage.removeItem('pos-auth');
     }
+
+    if (status === 403 && error.response?.data?.code === 'SAAS_SUSPENDED') {
+      const state = useAuthStore.getState();
+      if (state.user) {
+        state.setAuth(state.user, undefined, {
+          ...(state.subscription || {}),
+          status: 'suspended',
+        });
+      }
+    }
     return Promise.reject(error);
   },
 );

@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { StoreSubscription, SubscriptionPlan } from '../src/modules/saas/entities/store-subscription.entity';
 import { createTestingApp, resetAndSeed, SeedContext } from './e2e-helpers';
+import { AuditLog } from '../src/modules/audit-logs/entities/audit-log.entity';
 
 describe('SaaS Subscription E2E', () => {
   let app: INestApplication;
@@ -154,6 +155,34 @@ describe('SaaS Subscription E2E', () => {
     });
     expect(reactivated.status).toBe(200);
     expect(reactivated.body.status).toBe('active');
+
+    const suspendAudit = await dataSource.getRepository(AuditLog).findOne({
+      where: { storeId: seed.storeA.id, action: 'saas_tenant_suspended', userId: seed.superAdmin.id },
+      order: { createdAt: 'DESC' },
+    });
+    expect(suspendAudit).toBeTruthy();
+
+    const reactivateAudit = await dataSource.getRepository(AuditLog).findOne({
+      where: { storeId: seed.storeA.id, action: 'saas_tenant_reactivated', userId: seed.superAdmin.id },
+      order: { createdAt: 'DESC' },
+    });
+    expect(reactivateAudit).toBeTruthy();
+  });
+
+  it('solo super_admin puede listar tenants y cambiar estado', async () => {
+    const asAdminList = await req('/api/v1/saas/admin/tenants', { token: adminToken });
+    expect(asAdminList.status).toBe(403);
+
+    const asAdminSuspend = await req(`/api/v1/saas/admin/tenants/${seed.storeA.id}/suspend`, {
+      method: 'PATCH',
+      token: adminToken,
+    });
+    expect(asAdminSuspend.status).toBe(403);
+
+    const asSuperList = await req('/api/v1/saas/admin/tenants', { token: superAdminToken });
+    expect(asSuperList.status).toBe(200);
+    expect(Array.isArray(asSuperList.body)).toBe(true);
+    expect(asSuperList.body.some((t: any) => t.storeId === seed.storeA.id)).toBe(true);
   });
 
   it('basic plan cannot use credits, pro plan can', async () => {

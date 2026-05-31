@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard, Roles, UserRole } from '@core/guards/roles.guard';
 import { SaasService } from './saas.service';
@@ -15,12 +15,14 @@ export class SaasAdminController {
   }
 
   @Patch('tenants/:storeId/suspend')
-  suspend(@Param('storeId') storeId: string) {
-    return this.saasService.suspend(storeId);
+  suspend(@Param('storeId') storeId: string, @Request() req: any) {
+    const actorUserId = req.user?.id ?? req.userId;
+    return this.saasService.suspend(storeId, actorUserId, req.ip);
   }
 
   @Patch('tenants/:storeId/reactivate')
-  reactivate(@Param('storeId') storeId: string) {
-    return this.saasService.reactivate(storeId);
+  reactivate(@Param('storeId') storeId: string, @Request() req: any) {
+    const actorUserId = req.user?.id ?? req.userId;
+    return this.saasService.reactivate(storeId, actorUserId, req.ip);
   }
 }

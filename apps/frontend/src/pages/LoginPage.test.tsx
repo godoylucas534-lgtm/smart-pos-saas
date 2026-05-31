@@ -57,6 +57,7 @@ describe('LoginPage', () => {
       expect(setAuthMock).toHaveBeenCalledWith(
         { id: 'u1', email: 'admin@test.com', firstName: 'A', lastName: 'B', role: 'store_admin', storeId: 's1' },
         expect.any(String),
+        null,
       );
     });
     expect(localStorage.getItem('pos-store')).toBe(JSON.stringify({ id: 's1', name: 'Store One' }));

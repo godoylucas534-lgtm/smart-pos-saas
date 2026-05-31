@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import OfflineBanner from '../pwa/OfflineBanner';
 import ThemeToggle from '../ui/ThemeToggle';
 import AlertCenter from './AlertCenter';
+import SuspendedAccountBanner from './SuspendedAccountBanner';
 
 const CommandPalette = lazy(() => import('./CommandPalette'));
 
@@ -13,7 +14,7 @@ export default function AppLayout() {
       <OfflineBanner />
       <Sidebar />
       <main className="md:pl-64 pl-0 transition-all">
-        <div className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-black/20">
+        <div className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: 'color-mix(in srgb, var(--bg) 80%, transparent)', borderColor: 'var(--border)' }}>
           <div className="flex items-center justify-end gap-2 p-3 md:p-4">
             <AlertCenter />
             <Suspense fallback={null}>
@@ -22,6 +23,7 @@ export default function AppLayout() {
             <ThemeToggle />
           </div>
         </div>
+        <SuspendedAccountBanner />
         <Outlet />
       </main>
     </div>

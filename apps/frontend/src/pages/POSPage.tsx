@@ -82,31 +82,31 @@ export default function POSPage() {
   }, [cashOpen, clearCart, items.length]);
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col">
-      <div className="px-4 py-2 border-b border-gray-700 flex flex-wrap gap-2 bg-gray-900/95">
+    <div className="h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
+      <div className="px-4 py-2 border-b flex flex-wrap gap-2" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
         <button className="ui-button ui-button-ghost text-xs" onClick={() => productSearchRef.current?.focus()}>F2 Buscar</button>
         <button className="ui-button ui-button-ghost text-xs" onClick={() => setShowPayment(true)} disabled={items.length === 0 || cashOpen === false}>F4 Cobrar</button>
         <button className="ui-button ui-button-ghost text-xs" onClick={clearCart} disabled={items.length === 0}>F6 Limpiar</button>
-        <span className="text-xs self-center" style={{ color: 'var(--text-muted)' }}>
+        <span className="text-xs self-center ui-text-muted">
           Atajos rapidos para caja moderna
         </span>
       </div>
       {lowStockItems.length > 0 && (
-        <div className="bg-yellow-900 border-b border-yellow-700 px-4 py-2 flex items-center gap-3">
-          <span className="text-yellow-400 text-lg">!</span>
-          <span className="text-yellow-300 text-sm font-medium">
+        <div className="px-4 py-2 flex items-center gap-3 border-b" style={{ background: 'color-mix(in srgb, var(--warning) 15%, var(--surface))', borderColor: 'color-mix(in srgb, var(--warning) 40%, var(--border))' }}>
+          <span className="text-lg" style={{ color: 'var(--warning)' }}>!</span>
+          <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>
             Stock bajo: {lowStockItems.map((p) => `${p.name} (${formatStockInt(p.stock)} ${p.unit})`).join(' - ')}
           </span>
         </div>
       )}
 
       {cashOpen === false && (
-        <div className="bg-red-900 border-b border-red-700 px-4 py-2 flex items-center justify-between">
+        <div className="border-b px-4 py-2 flex items-center justify-between" style={{ background: 'color-mix(in srgb, var(--danger) 15%, var(--surface))', borderColor: 'color-mix(in srgb, var(--danger) 45%, var(--border))' }}>
           <div className="flex items-center gap-3">
-            <span className="text-red-400 text-lg">X</span>
-            <span className="text-red-300 text-sm font-medium">Caja cerrada. Debes abrir la caja antes de cobrar.</span>
+            <span className="text-lg" style={{ color: 'var(--danger)' }}>X</span>
+            <span className="text-sm font-medium">Caja cerrada. Debes abrir la caja antes de cobrar.</span>
           </div>
-          <button onClick={() => navigate('/cash-register')} className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-lg">
+          <button onClick={() => navigate('/cash-register')} className="ui-button ui-button-danger text-xs px-3 py-1">
             Abrir Caja
           </button>
         </div>
@@ -120,13 +120,14 @@ export default function POSPage() {
             placeholder="Buscar producto..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full ui-input mb-3"
           />
 
           <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
             <button
               onClick={() => setSelectedCat('')}
-              className={`px-3 py-1 rounded-full text-sm whitespace-nowrap font-medium ${selectedCat === '' ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+              className={`px-3 py-1 rounded-full text-sm whitespace-nowrap font-medium ${selectedCat === '' ? 'ui-button-primary text-white' : ''}`}
+              style={selectedCat === '' ? undefined : { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
             >
               Todos
             </button>
@@ -134,8 +135,12 @@ export default function POSPage() {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCat(selectedCat === cat.id ? '' : cat.id)}
-                style={{ backgroundColor: selectedCat === cat.id ? cat.color : '' }}
-                className={`px-3 py-1 rounded-full text-sm whitespace-nowrap font-medium ${selectedCat === cat.id ? 'text-white' : 'bg-gray-700 text-gray-300'}`}
+                style={
+                  selectedCat === cat.id
+                    ? { backgroundColor: cat.color, color: '#fff' }
+                    : { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-muted)' }
+                }
+                className="px-3 py-1 rounded-full text-sm whitespace-nowrap font-medium"
               >
                 {cat.name}
               </button>
@@ -144,20 +149,20 @@ export default function POSPage() {
 
           <div className="flex-1 overflow-y-auto">
             {loading ? (
-              <div className="text-gray-400 text-center py-20">Cargando productos...</div>
+              <div className="ui-state-card text-center py-20">Cargando productos...</div>
             ) : products.length === 0 ? (
-              <div className="text-gray-400 text-center py-20">No se encontraron productos</div>
+              <div className="ui-state-card text-center py-20">No se encontraron productos</div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {products.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => addItem({ id: p.id, name: p.name, sku: p.sku, salePrice: p.salePrice, taxRate: p.taxRate, stock: p.stock, unit: p.unit })}
-                    className="bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-indigo-500 rounded-xl p-3 text-left transition-all"
+                    className="ui-card text-left transition-all hover:translate-y-[-1px]"
                   >
-                    <div className="text-white text-sm font-medium leading-tight mb-1">{p.name}</div>
-                    <div className="text-indigo-400 font-bold">{formatCurrencyPYG(p.salePrice)}</div>
-                    <div className="text-gray-500 text-xs mt-1">Stock: {formatStockInt(p.stock)}</div>
+                    <div className="text-sm font-medium leading-tight mb-1">{p.name}</div>
+                    <div className="font-bold" style={{ color: 'var(--primary)' }}>{formatCurrencyPYG(p.salePrice)}</div>
+                    <div className="text-xs mt-1 ui-text-muted">Stock: {formatStockInt(p.stock)}</div>
                   </button>
                 ))}
               </div>
@@ -165,29 +170,29 @@ export default function POSPage() {
           </div>
         </div>
 
-        <div className="w-full lg:w-80 bg-gray-800 flex flex-col border-l border-gray-700 max-h-[45vh] lg:max-h-none">
-          <div className="p-4 border-b border-gray-700">
-            <h2 className="text-white font-bold text-lg">Carrito</h2>
-            <span className="text-gray-400 text-sm">{items.length} productos</span>
+        <div className="w-full lg:w-80 flex flex-col border-l max-h-[45vh] lg:max-h-none" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+          <div className="p-4 border-b" style={{ borderColor: 'var(--border)' }}>
+            <h2 className="font-bold text-lg">Carrito</h2>
+            <span className="text-sm ui-text-muted">{items.length} productos</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {items.length === 0 ? (
-              <div className="text-gray-500 text-center py-10 text-sm">Agrega productos haciendo click en las tarjetas</div>
+              <div className="ui-state-card text-center py-10 text-sm">Agrega productos haciendo click en las tarjetas</div>
             ) : (
               items.map((item) => (
-                <div key={item.product.id} className="bg-gray-700 rounded-lg p-3">
+                <div key={item.product.id} className="ui-card p-3">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-white text-sm font-medium leading-tight flex-1 mr-2">{item.product.name}</span>
-                    <button onClick={() => removeItem(item.product.id)} className="text-red-400 hover:text-red-300 text-lg leading-none">x</button>
+                    <span className="text-sm font-medium leading-tight flex-1 mr-2">{item.product.name}</span>
+                    <button onClick={() => removeItem(item.product.id)} className="text-lg leading-none" style={{ color: 'var(--danger)' }}>x</button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="bg-gray-600 hover:bg-gray-500 text-white w-7 h-7 rounded-lg font-bold">-</button>
-                      <span className="text-white text-sm w-6 text-center">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)} className="bg-gray-600 hover:bg-gray-500 text-white w-7 h-7 rounded-lg font-bold">+</button>
+                      <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="ui-button ui-button-ghost w-7 h-7 p-0">-</button>
+                      <span className="text-sm w-6 text-center">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)} className="ui-button ui-button-ghost w-7 h-7 p-0">+</button>
                     </div>
-                    <span className="text-indigo-400 font-bold text-sm">{formatCurrencyPYG(item.lineTotal)}</span>
+                    <span className="font-bold text-sm" style={{ color: 'var(--primary)' }}>{formatCurrencyPYG(item.lineTotal)}</span>
                   </div>
                 </div>
               ))
@@ -196,12 +201,12 @@ export default function POSPage() {
 
           <div className="p-3 border-t border-gray-700">
             {selectedCustomer ? (
-              <div className="bg-indigo-900 rounded-lg p-3 flex justify-between items-center">
+              <div className="ui-card p-3 flex justify-between items-center">
                 <div>
-                  <div className="text-white text-sm font-medium">{selectedCustomer.firstName} {selectedCustomer.lastName}</div>
-                  <div className="text-indigo-300 text-xs">{selectedCustomer.phone || selectedCustomer.document || 'Sin contacto'}</div>
+                  <div className="text-sm font-medium">{selectedCustomer.firstName} {selectedCustomer.lastName}</div>
+                  <div className="text-xs ui-text-muted">{selectedCustomer.phone || selectedCustomer.document || 'Sin contacto'}</div>
                 </div>
-                <button onClick={() => setSelectedCustomer(null)} className="text-red-400 hover:text-red-300 text-lg">x</button>
+                <button onClick={() => setSelectedCustomer(null)} className="text-lg" style={{ color: 'var(--danger)' }}>x</button>
               </div>
             ) : (
               <div className="relative">
@@ -213,10 +218,10 @@ export default function POSPage() {
                     setCustomerSearch(e.target.value);
                   }}
                   onFocus={() => setShowCustomerSearch(true)}
-                  className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full ui-input text-sm"
                 />
                 {showCustomerSearch && customerResults.length > 0 && (
-                  <div className="absolute bottom-full left-0 right-0 bg-gray-700 rounded-lg shadow-xl mb-1 max-h-40 overflow-y-auto z-10 border border-gray-600">
+                  <div className="absolute bottom-full left-0 right-0 ui-surface mb-1 max-h-40 overflow-y-auto z-10">
                     {customerResults.map((c) => (
                       <button
                         key={c.id}
@@ -225,10 +230,11 @@ export default function POSPage() {
                           setCustomerSearch('');
                           setShowCustomerSearch(false);
                         }}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-600 text-white text-sm border-b border-gray-600 last:border-0"
+                        className="w-full text-left px-3 py-2 text-sm border-b last:border-0 hover:bg-[var(--surface-hover)]"
+                        style={{ borderColor: 'var(--border)' }}
                       >
                         <div className="font-medium">{c.firstName} {c.lastName}</div>
-                        <div className="text-gray-400 text-xs">{c.phone || c.document || c.email || ''}</div>
+                        <div className="ui-text-muted text-xs">{c.phone || c.document || c.email || ''}</div>
                       </button>
                     ))}
                   </div>
@@ -237,14 +243,14 @@ export default function POSPage() {
             )}
           </div>
 
-          <div className="p-4 border-t border-gray-700 space-y-2">
-            <div className="flex justify-between text-gray-400 text-sm"><span>Subtotal</span><span>{formatCurrencyPYG(subtotal)}</span></div>
-            <div className="flex justify-between text-gray-400 text-sm"><span>IVA</span><span>{formatCurrencyPYG(taxTotal)}</span></div>
-            <div className="flex justify-between text-white font-bold text-lg border-t border-gray-600 pt-2"><span>TOTAL</span><span className="text-indigo-400">{formatCurrencyPYG(total)}</span></div>
-            <button onClick={() => setShowPayment(true)} disabled={items.length === 0 || cashOpen === false} className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl text-lg transition-colors mt-2">
+          <div className="p-4 border-t space-y-2" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex justify-between ui-text-muted text-sm"><span>Subtotal</span><span>{formatCurrencyPYG(subtotal)}</span></div>
+            <div className="flex justify-between ui-text-muted text-sm"><span>IVA</span><span>{formatCurrencyPYG(taxTotal)}</span></div>
+            <div className="flex justify-between font-bold text-lg border-t pt-2" style={{ borderColor: 'var(--border)' }}><span>TOTAL</span><span style={{ color: 'var(--primary)' }}>{formatCurrencyPYG(total)}</span></div>
+            <button onClick={() => setShowPayment(true)} disabled={items.length === 0 || cashOpen === false} className="w-full ui-button ui-button-primary disabled:opacity-50 disabled:cursor-not-allowed py-4 rounded-xl text-lg mt-2">
               COBRAR
             </button>
-            {items.length > 0 && <button onClick={clearCart} className="w-full text-gray-400 hover:text-red-400 text-sm py-1 transition-colors">Limpiar carrito</button>}
+            {items.length > 0 && <button onClick={clearCart} className="w-full ui-text-muted hover:text-red-400 text-sm py-1 transition-colors">Limpiar carrito</button>}
           </div>
         </div>
       </div>
