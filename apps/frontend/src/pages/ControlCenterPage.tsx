@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import AdaptiveDataTable, { type DataColumn } from '@/components/ui/AdaptiveDataTable';
 import { PageError, PageLoading } from '@/components/ui/PageState';
 import { fetchTenants, reactivateTenant, suspendTenant, type TenantRow } from '@/features/saas-admin/api/saas-admin.api';
+import PolicyModal from '@/features/saas-admin/components/PolicyModal';
 
 function fmtDate(value?: string | null) {
   if (!value) return '-';
@@ -21,6 +23,8 @@ function statusBadge(status: string) {
 
 export default function ControlCenterPage() {
   const qc = useQueryClient();
+  const [policyModalStore, setPolicyModalStore] = useState<{ id: string; name: string } | null>(null);
+
   const tenantsQuery = useQuery({
     queryKey: ['saas-admin', 'tenants'],
     queryFn: fetchTenants,
@@ -51,6 +55,20 @@ export default function ControlCenterPage() {
     { key: 'status', title: 'Estado', render: (t) => statusBadge(t.status) },
     { key: 'period', title: 'Fin periodo', render: (t) => fmtDate(t.currentPeriodEndsAt) },
     { key: 'grace', title: 'Fin grace', render: (t) => fmtDate(t.graceEndsAt) },
+    {
+      key: 'policy',
+      title: 'Política',
+      align: 'center',
+      render: (t) => (
+        <button
+          type="button"
+          className="ui-button ui-button-ghost text-xs px-3 py-1"
+          onClick={() => setPolicyModalStore({ id: t.storeId, name: t.storeName || t.storeSlug })}
+        >
+          Política
+        </button>
+      ),
+    },
     {
       key: 'actions',
       title: 'Acciones',
@@ -83,7 +101,7 @@ export default function ControlCenterPage() {
       <section className="ui-hero">
         <p className="ui-kicker">Panel Interno</p>
         <h1 className="text-2xl md:text-3xl font-semibold">Control Center</h1>
-        <p className="ui-text-muted mt-2">Gestión de suscripciones, suspensión y reactivación de tenants (solo super admin).</p>
+        <p className="ui-text-muted mt-2">Gestión de suscripciones, suspensión y políticas de acceso de tenants (solo super admin).</p>
       </section>
       <section className="ui-card">
         {tenantsQuery.isLoading ? (
@@ -94,6 +112,14 @@ export default function ControlCenterPage() {
           <AdaptiveDataTable columns={columns} rows={tenants} rowKey={(t) => t.storeId} density="compact" emptyMessage="Sin tenants disponibles." />
         )}
       </section>
+
+      {policyModalStore && (
+        <PolicyModal
+          storeId={policyModalStore.id}
+          storeName={policyModalStore.name}
+          onClose={() => setPolicyModalStore(null)}
+        />
+      )}
     </div>
   );
 }

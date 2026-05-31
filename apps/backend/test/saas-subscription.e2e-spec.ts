@@ -185,6 +185,50 @@ describe('SaaS Subscription E2E', () => {
     expect(asSuperList.body.some((t: any) => t.storeId === seed.storeA.id)).toBe(true);
   });
 
+  it('policy endpoint: store_admin 403 y super_admin 200', async () => {
+    const adminGet = await req(`/api/v1/saas/admin/stores/${seed.storeA.id}/policy`, {
+      token: adminToken,
+    });
+    console.log('EVIDENCE_POLICY_STORE_ADMIN', JSON.stringify(adminGet));
+    expect(adminGet.status).toBe(403);
+
+    const superGet = await req(`/api/v1/saas/admin/stores/${seed.storeA.id}/policy`, {
+      token: superAdminToken,
+    });
+    console.log('EVIDENCE_POLICY_SUPER_ADMIN', JSON.stringify(superGet));
+    expect(superGet.status).toBe(200);
+    expect(superGet.body?.storeId).toBe(seed.storeA.id);
+  });
+
+  it('bloqueo por policy devuelve ACCESS_RESTRICTED con mensaje/contacto personalizados', async () => {
+    const updatePolicy = await req(`/api/v1/saas/admin/stores/${seed.storeA.id}/policy`, {
+      method: 'PATCH',
+      token: superAdminToken,
+      body: {
+        accessBlockedUntil: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        customSuspendMessage: 'Cuenta bloqueada por auditoria interna.',
+        supportContact: 'https://wa.me/595981111111',
+      },
+    });
+    expect(updatePolicy.status).toBe(200);
+
+    await openCashRegister(adminToken);
+    const sale = await req('/api/v1/sales', {
+      method: 'POST',
+      token: adminToken,
+      body: {
+        paymentMethod: 'cash',
+        amountPaid: 12000,
+        items: [{ productId: seed.productA.id, quantity: 1, unitPrice: 10000 }],
+      },
+    });
+    console.log('EVIDENCE_ACCESS_RESTRICTED_RESPONSE', JSON.stringify(sale));
+    expect(sale.status).toBe(403);
+    expect(sale.body?.code).toBe('ACCESS_RESTRICTED');
+    expect(String(sale.body?.message || '')).toContain('Cuenta bloqueada por auditoria interna.');
+    expect(sale.body?.supportContact).toBe('https://wa.me/595981111111');
+  });
+
   it('basic plan cannot use credits, pro plan can', async () => {
     const basicPending = await req('/api/v1/credit-accounts/pending', { token: adminBToken });
     expect(basicPending.status).toBe(403);
