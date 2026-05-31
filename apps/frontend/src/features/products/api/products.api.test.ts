@@ -42,7 +42,7 @@ describe('buildProductPayload', () => {
       stockMin: 2,
       taxRate: 10,
       unit: 'unidad',
-      controlsStock: true,
+      trackStock: true,
       isBulk: false,
       imageUrl: undefined,
       notes: 'nota interna',
@@ -55,6 +55,6 @@ describe('buildProductPayload', () => {
     expect(payload).not.toHaveProperty('updatedAt');
     expect(payload).not.toHaveProperty('category');
     expect(payload).not.toHaveProperty('metadata');
-    expect(payload).not.toHaveProperty('trackStock');
+    expect(payload).not.toHaveProperty('controlsStock');
   });
 });

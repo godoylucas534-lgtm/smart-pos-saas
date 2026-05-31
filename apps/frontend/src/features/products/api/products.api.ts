@@ -29,7 +29,6 @@ type ProductFormInput = {
   taxRate?: number | string;
   unit?: string;
   trackStock?: boolean;
-  controlsStock?: boolean;
   isBulk?: boolean;
   imageUrl?: string;
   notes?: string;
@@ -57,7 +56,7 @@ export function buildProductPayload(input: ProductFormInput) {
     stockMin: Number(input.stockMin || 0),
     taxRate: Number(input.taxRate || 0),
     unit: input.unit || 'unidad',
-    controlsStock: Boolean(input.controlsStock ?? input.trackStock),
+    trackStock: Boolean(input.trackStock),
     isBulk: Boolean(input.isBulk),
     imageUrl: optionalText(input.imageUrl),
     notes: optionalText(input.notes),
