@@ -33,6 +33,7 @@ type ProductFormInput = {
   imageUrl?: string;
   notes?: string;
   isActive?: boolean;
+  metadata?: Record<string, any>;
 };
 
 const optionalText = (value?: string) => {
@@ -42,7 +43,12 @@ const optionalText = (value?: string) => {
 
 // Keep update/create payload aligned with backend DTO (no readonly fields).
 export function buildProductPayload(input: ProductFormInput, options?: { includeIsActive?: boolean }) {
-  const payload = {
+  // Support mapping controlsStock (legacy) to trackStock
+  const trackStockVal = input.trackStock !== undefined 
+    ? input.trackStock 
+    : (input as any).controlsStock;
+
+  const payload: any = {
     name: (input.name || '').trim(),
     sku: optionalText(input.sku),
     description: optionalText(input.description),
@@ -56,13 +62,22 @@ export function buildProductPayload(input: ProductFormInput, options?: { include
     stockMin: Number(input.stockMin || 0),
     taxRate: Number(input.taxRate || 0),
     unit: input.unit || 'unidad',
-    trackStock: Boolean(input.trackStock),
+    trackStock: trackStockVal === undefined ? true : Boolean(trackStockVal),
     isBulk: Boolean(input.isBulk),
     imageUrl: optionalText(input.imageUrl),
-    notes: optionalText(input.notes),
   };
-  if (options?.includeIsActive) {
-    (payload as any).isActive = input.isActive === undefined ? true : Boolean(input.isActive);
+
+  const notesVal = optionalText(input.notes);
+  if (notesVal) {
+    payload.metadata = { notes: notesVal };
+  } else if (input.metadata) {
+    payload.metadata = input.metadata;
   }
+
+  if (options?.includeIsActive) {
+    payload.isActive = input.isActive === undefined ? true : Boolean(input.isActive);
+  }
+
   return payload;
 }
+

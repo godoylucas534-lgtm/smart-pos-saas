@@ -57,6 +57,9 @@ export default function CreditPage() {
       const data = await parseJsonSafe<any>(res);
 
       if (!res.ok) {
+        if (res.status === 403 && (data as any)?.code === 'SAAS_FEATURE_NOT_AVAILABLE') {
+          throw new Error('Funcionalidad no disponible en tu plan actual. Por favor actualiza a un plan superior para habilitar el control de fiados.');
+        }
         const message = Array.isArray((data as any)?.message)
           ? (data as any).message.join(', ')
           : (data as any)?.message || 'No se pudieron cargar los creditos pendientes';
