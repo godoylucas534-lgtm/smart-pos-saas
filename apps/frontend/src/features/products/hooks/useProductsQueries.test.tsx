@@ -60,7 +60,7 @@ describe('useSaveProductMutation', () => {
     expect(cleanPayload).not.toHaveProperty('createdAt');
     expect(cleanPayload).not.toHaveProperty('updatedAt');
     expect(cleanPayload).not.toHaveProperty('category');
-    expect(cleanPayload).not.toHaveProperty('metadata');
+    expect(cleanPayload).toHaveProperty('metadata');
     expect(cleanPayload).not.toHaveProperty('controlsStock');
     expect(cleanPayload).toHaveProperty('trackStock', true);
   });

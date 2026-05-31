@@ -10,6 +10,7 @@ import {
   usePOSProducts,
 } from '@/features/pos/hooks/usePOSQueries';
 import toast from 'react-hot-toast';
+import { formatCurrencyPYG, formatStockInt } from '@/lib/utils';
 
 export default function POSPage() {
   const navigate = useNavigate();
@@ -80,13 +81,6 @@ export default function POSPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [cashOpen, clearCart, items.length]);
 
-  const formatPrice = (p: number) =>
-    new Intl.NumberFormat('es-PY', {
-      style: 'currency',
-      currency: 'PYG',
-      minimumFractionDigits: 0,
-    }).format(p || 0);
-
   return (
     <div className="h-screen bg-gray-900 flex flex-col">
       <div className="px-4 py-2 border-b border-gray-700 flex flex-wrap gap-2 bg-gray-900/95">
@@ -101,7 +95,7 @@ export default function POSPage() {
         <div className="bg-yellow-900 border-b border-yellow-700 px-4 py-2 flex items-center gap-3">
           <span className="text-yellow-400 text-lg">!</span>
           <span className="text-yellow-300 text-sm font-medium">
-            Stock bajo: {lowStockItems.map((p) => `${p.name} (${p.stock} ${p.unit})`).join(' - ')}
+            Stock bajo: {lowStockItems.map((p) => `${p.name} (${formatStockInt(p.stock)} ${p.unit})`).join(' - ')}
           </span>
         </div>
       )}
@@ -162,8 +156,8 @@ export default function POSPage() {
                     className="bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-indigo-500 rounded-xl p-3 text-left transition-all"
                   >
                     <div className="text-white text-sm font-medium leading-tight mb-1">{p.name}</div>
-                    <div className="text-indigo-400 font-bold">{formatPrice(p.salePrice)}</div>
-                    <div className="text-gray-500 text-xs mt-1">Stock: {Number(p.stock)}</div>
+                    <div className="text-indigo-400 font-bold">{formatCurrencyPYG(p.salePrice)}</div>
+                    <div className="text-gray-500 text-xs mt-1">Stock: {formatStockInt(p.stock)}</div>
                   </button>
                 ))}
               </div>
@@ -193,7 +187,7 @@ export default function POSPage() {
                       <span className="text-white text-sm w-6 text-center">{item.quantity}</span>
                       <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)} className="bg-gray-600 hover:bg-gray-500 text-white w-7 h-7 rounded-lg font-bold">+</button>
                     </div>
-                    <span className="text-indigo-400 font-bold text-sm">{formatPrice(item.lineTotal)}</span>
+                    <span className="text-indigo-400 font-bold text-sm">{formatCurrencyPYG(item.lineTotal)}</span>
                   </div>
                 </div>
               ))
@@ -244,9 +238,9 @@ export default function POSPage() {
           </div>
 
           <div className="p-4 border-t border-gray-700 space-y-2">
-            <div className="flex justify-between text-gray-400 text-sm"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
-            <div className="flex justify-between text-gray-400 text-sm"><span>IVA</span><span>{formatPrice(taxTotal)}</span></div>
-            <div className="flex justify-between text-white font-bold text-lg border-t border-gray-600 pt-2"><span>TOTAL</span><span className="text-indigo-400">{formatPrice(total)}</span></div>
+            <div className="flex justify-between text-gray-400 text-sm"><span>Subtotal</span><span>{formatCurrencyPYG(subtotal)}</span></div>
+            <div className="flex justify-between text-gray-400 text-sm"><span>IVA</span><span>{formatCurrencyPYG(taxTotal)}</span></div>
+            <div className="flex justify-between text-white font-bold text-lg border-t border-gray-600 pt-2"><span>TOTAL</span><span className="text-indigo-400">{formatCurrencyPYG(total)}</span></div>
             <button onClick={() => setShowPayment(true)} disabled={items.length === 0 || cashOpen === false} className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl text-lg transition-colors mt-2">
               COBRAR
             </button>

@@ -44,7 +44,7 @@ describe('buildProductPayload', () => {
       trackStock: true,
       isBulk: false,
       imageUrl: undefined,
-      notes: 'nota interna',
+      metadata: { notes: 'nota interna' },
     });
 
     expect(payload).not.toHaveProperty('id');
@@ -52,7 +52,7 @@ describe('buildProductPayload', () => {
     expect(payload).not.toHaveProperty('createdAt');
     expect(payload).not.toHaveProperty('updatedAt');
     expect(payload).not.toHaveProperty('category');
-    expect(payload).not.toHaveProperty('metadata');
+    expect(payload).not.toHaveProperty('notes');
     expect(payload).not.toHaveProperty('controlsStock');
     expect(payload).not.toHaveProperty('isActive');
   });

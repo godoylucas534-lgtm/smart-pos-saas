@@ -21,8 +21,8 @@ export class ProductsService {
   private serializeProduct(product: Product): Product {
     return {
       ...product,
-      stock: Number(product.stock || 0),
-      stockMin: Number(product.stockMin || 0),
+      stock: Math.round(Number(product.stock || 0)),
+      stockMin: Math.round(Number(product.stockMin || 0)),
     };
   }
 
