@@ -57,6 +57,7 @@ export class SaasService {
   async listTenants() {
     return this.subscriptionRepo
       .createQueryBuilder('s')
+      .leftJoin('store_access_policy', 'p', 'p."storeId" = s."storeId"')
       .leftJoin('stores', 'st', 'st.id = s."storeId"')
       .select([
         's.id as "subscriptionId"',
@@ -70,6 +71,10 @@ export class SaasService {
         's."graceEndsAt" as "graceEndsAt"',
         's."suspendedAt" as "suspendedAt"',
         's."cancelledAt" as "cancelledAt"',
+        'p."accessBlockedUntil" as "accessBlockedUntil"',
+        'p."autoReactivateAt" as "autoReactivateAt"',
+        'p."customSuspendMessage" as "customSuspendMessage"',
+        'p."supportContact" as "supportContact"',
       ])
       .orderBy('st.name', 'ASC')
       .getRawMany();

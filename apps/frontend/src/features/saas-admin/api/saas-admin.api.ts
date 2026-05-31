@@ -14,6 +14,24 @@ export type TenantRow = {
   cancelledAt?: string | null;
 };
 
+export type StoreAccessPolicy = {
+  id: string;
+  storeId: string;
+  accessBlockedUntil: string | null;
+  autoReactivateAt: string | null;
+  customSuspendMessage: string | null;
+  supportContact: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpdateAccessPolicyPayload = {
+  accessBlockedUntil?: string | null;
+  autoReactivateAt?: string | null;
+  customSuspendMessage?: string | null;
+  supportContact?: string | null;
+};
+
 export const fetchTenants = () => apiGet<TenantRow[]>('/saas/admin/tenants');
 
 export const suspendTenant = (storeId: string) =>
@@ -21,3 +39,12 @@ export const suspendTenant = (storeId: string) =>
 
 export const reactivateTenant = (storeId: string) =>
   apiClient.patch(`/saas/admin/tenants/${storeId}/reactivate`).then((r) => r.data);
+
+export const fetchStorePolicy = (storeId: string) =>
+  apiGet<StoreAccessPolicy>(`/saas/admin/stores/${storeId}/policy`);
+
+export const updateStorePolicy = (storeId: string, payload: UpdateAccessPolicyPayload) =>
+  apiClient.patch(`/saas/admin/stores/${storeId}/policy`, payload).then((r) => r.data);
+
+export const fetchMyStorePolicy = () =>
+  apiGet<StoreAccessPolicy>('/saas/policy/mine');

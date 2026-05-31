@@ -15,6 +15,7 @@ import { CreditAccount } from '../modules/credit-accounts/entities/credit-accoun
 import { StockMovement } from '../modules/stock-movements/entities/stock-movement.entity';
 import { AuditLog } from '../modules/audit-logs/entities/audit-log.entity';
 import { StoreSubscription } from '../modules/saas/entities/store-subscription.entity';
+import { StoreAccessPolicy } from '../modules/saas/entities/store-access-policy.entity';
 import { StoreCounter } from '../modules/sales/entities/store-counter.entity';
 
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
@@ -46,7 +47,8 @@ export const AppDataSource = new DataSource({
     CreditAccount,
     StockMovement,
     AuditLog,
-    StoreSubscription,
+StoreSubscription,
+    StoreAccessPolicy,
     StoreCounter,
   ],
   migrations: [path.join(__dirname, '../migrations/*.{ts,js}')],
