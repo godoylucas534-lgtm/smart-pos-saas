@@ -1,8 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { useAuthStore } from './stores/auth.store';
 import AppLayout from './components/layout/AppLayout';
 import { getSessionMe } from './features/auth/api/auth.api';
+import { PrivateRoute, StoreAdminRoute, SuperAdminRoute } from './components/auth/RoleGuards';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
@@ -17,22 +18,8 @@ const UsersPage = lazy(() => import('./pages/UsersPage'));
 const CashRegisterPage = lazy(() => import('./pages/CashRegisterPage'));
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
 const CreditPage = lazy(() => import('./pages/CreditPage'));
+const ControlCenterPage = lazy(() => import('./pages/ControlCenterPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
-
-function PrivateRoute({ children }: { children: JSX.Element }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const sessionChecked = useAuthStore((s) => s.sessionChecked);
-  if (!sessionChecked) {
-    return <div className="min-h-screen bg-gray-900 text-gray-300 p-6">Cargando sesion...</div>;
-  }
-  return isAuthenticated ? children : <Navigate to="/login" />;
-}
-
-function AdminRoute({ children }: { children: JSX.Element }) {
-  const user = useAuthStore((s) => s.user);
-  if (!user) return <Navigate to="/login" />;
-  return user.role === 'store_admin' ? children : <Navigate to="/pos" />;
-}
 
 export default function App() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -45,7 +32,7 @@ export default function App() {
       try {
         const session = await getSessionMe();
         if (!active) return;
-        setAuth(session.user);
+        setAuth(session.user, undefined, session.subscription ?? null);
       } catch {
         if (!active) return;
         clearAuth();
@@ -77,10 +64,11 @@ export default function App() {
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/cash-register" element={<CashRegisterPage />} />
           <Route path="/credits" element={<CreditPage />} />
-          <Route path="/reports" element={<AdminRoute><ReportsPage /></AdminRoute>} />
-          <Route path="/settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
-          <Route path="/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
-          <Route path="/expenses" element={<AdminRoute><ExpensesPage /></AdminRoute>} />
+          <Route path="/reports" element={<StoreAdminRoute><ReportsPage /></StoreAdminRoute>} />
+          <Route path="/settings" element={<StoreAdminRoute><SettingsPage /></StoreAdminRoute>} />
+          <Route path="/users" element={<StoreAdminRoute><UsersPage /></StoreAdminRoute>} />
+          <Route path="/expenses" element={<StoreAdminRoute><ExpensesPage /></StoreAdminRoute>} />
+          <Route path="/control-center" element={<SuperAdminRoute><ControlCenterPage /></SuperAdminRoute>} />
         </Route>
 
         <Route path="/" element={<LandingPage />} />

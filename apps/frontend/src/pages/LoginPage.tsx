@@ -118,7 +118,7 @@ export default function LoginPage() {
     setErrorMessage('');
     try {
       const { auth, store } = await loginMutation.mutateAsync({ email, password });
-      setAuth(auth.user, auth.accessToken ?? '');
+      setAuth(auth.user, auth.accessToken ?? '', auth.subscription ?? null);
       if (store) {
         localStorage.setItem('pos-store', JSON.stringify(store));
       }

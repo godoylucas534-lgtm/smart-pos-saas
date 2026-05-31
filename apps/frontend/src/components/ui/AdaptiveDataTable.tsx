@@ -40,7 +40,7 @@ export default function AdaptiveDataTable<T>({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--border)' }}>
       <table className="w-full text-sm">
         <thead className={stickyHeader ? 'sticky top-0 z-10' : ''} style={{ background: 'var(--surface)' }}>
           <tr style={{ color: 'var(--text-muted)' }}>
@@ -61,14 +61,8 @@ export default function AdaptiveDataTable<T>({
           {rows.map((row, index) => (
             <tr
               key={rowKey(row, index)}
-              className="transition-colors"
+              className="transition-colors hover:bg-[var(--surface-hover)]"
               style={{ borderBottom: '1px solid var(--border)' }}
-              onMouseEnter={(event) => {
-                event.currentTarget.style.background = 'var(--surface-hover)';
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.background = 'transparent';
-              }}
             >
               {columns.map((column) => (
                 <td
@@ -87,4 +81,3 @@ export default function AdaptiveDataTable<T>({
     </div>
   );
 }
-
